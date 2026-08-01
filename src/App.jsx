@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./supabase";
 import NewLead from "./NewLead.jsx";
+import Dashboard from "./Dashboard.jsx";
 
 const TENURE_OPTIONS = [3,6,9,10,12,15,18,21,24,27,30,33,36];
 const PRODUCTS = ["SV GST","SV Non GST","STD ROI","HYBRID"];
