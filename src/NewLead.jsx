@@ -1,318 +1,198 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "./supabase";
+import { Btn, Alert } from "./App";
 
-const LEAD_SOURCES  = ["Direct Sales","Client Website","Channel Partner","Inside Sales Team","North Sales Team","South Sales Team","East Sales Team","West Sales Team","Referral","Other"];
-const BIZ_TYPES     = ["Trust/Society","Private Limited","Partnership Firm","LLP","Proprietorship","Other"];
-const INST_TYPES    = ["K-12", "Higher Education", "Upskilling"];
-const INST_DOMAINS  = {
-  "K-12":             ["CBSE", "STATE BOARD", "ICSE", "INTERNATIONAL"],
-  "Higher Education": ["Engineering College", "Medical College", "Physiotherapy", "Business", "Design", "Gaming", "Hotel Management", "Others"],
-  "Upskilling":       ["Healthcare", "Technology", "Executive Education", "Other Upskilling"],
-};
-const INDIA_STATES  = [
-  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat",
-  "Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh",
-  "Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan",
-  "Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal",
-  "Andaman & Nicobar Islands","Chandigarh","Dadra & Nagar Haveli and Daman & Diu",
-  "Delhi","Jammu & Kashmir","Ladakh","Lakshadweep","Puducherry",
-];
+const TENURE_OPTIONS = [3,6,9,10,12,15,18,21,24,27,30,33,36];
+const PRODUCTS = ["SV GST","SV Non GST","STD ROI","HYBRID"];
+const ADVANCE_EMI_OPTIONS = [0,1,2,3];
+const INST_TYPES = ["Engineering College","Medical College","K-12 School","Skill Dev Institute","University","Management Institute","Polytechnic","Other"];
+const BIZ_TYPES = ["Trust/Society","Private Limited","Partnership Firm","LLP","Proprietorship","Other"];
+const LEAD_SOURCES = ["Direct Sales","Client Website","Channel Partner","Inside Sales Team","North Sales Team","South Sales Team","East Sales Team","West Sales Team","Referral","Other"];
 
-export default function NewLead({ currentUser, onSubmit, onCancel }) {
-  const [saving, setSaving]           = useState(false);
-  const [error, setError]             = useState("");
-  const [errors, setErrors]           = useState({});
-  const [instType, setInstType]       = useState("");
-  const [domain, setDomain]           = useState("");
-  const [instState, setInstState]     = useState("");
-  const [source, setSource]           = useState("");
-  const [businessType, setBizType]    = useState("");
-  const [gst, setGst]                 = useState(false);
+export default function NewLead({currentUser,onSubmit,onCancel}){
+  const [formData,setFormData]=useState({name:"",legal_name:"",institute_type:"",business_type:"",estd_year:new Date().getFullYear(),turnover:"",source:"",sampleFees:"",roi:"",subvention:"",tenure:12,advanceEmi:0,product:"",processingFee:"",processingFeeType:"%"});
+  const [loading,setLoading]=useState(false);
+  const [error,setError]=useState("");
+  const [success,setSuccess]=useState(false);
 
-  // text / number field refs via a simple object approach
-  const [fields, setFields] = useState({
-    name: "", legalName: "", website: "", estd: "",
-    turnover: "", monthlyVol: "", avgTicket: "",
-    contactName: "", contactEmail: "", contactPhone: "", notes: "",
-  });
-  const set = (k) => (e) => setFields(f => ({ ...f, [k]: e.target.value }));
-
-  const validate = () => {
-    const e = {};
-    if (!fields.name.trim())                                   e.name         = "Required";
-    if (!instType)                                             e.instType     = "Required";
-    if (!domain)                                               e.domain       = "Required";
-    if (!businessType)                                         e.businessType = "Required";
-    if (!source)                                               e.source       = "Required";
-    const yr = Number(fields.estd);
-    if (!fields.estd || isNaN(yr) || yr < 1800 || yr > 2030)  e.estd         = "Enter a valid year";
-    if (!fields.turnover.trim())                               e.turnover     = "Required";
-    if (!fields.monthlyVol || isNaN(fields.monthlyVol))        e.monthlyVol   = "Enter a number";
-    if (!fields.avgTicket  || isNaN(fields.avgTicket))         e.avgTicket    = "Enter a number";
-    if (!fields.contactEmail.includes("@"))                    e.contactEmail = "Enter a valid email";
-    return e;
+  const handleChange=(e)=>{
+    const {name,value}=e.target;
+    setFormData(prev=>({...prev,[name]:value}));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const errs = validate();
-    if (Object.keys(errs).length) { setErrors(errs); return; }
+  const handleSubmit=async()=>{
+    const errors=[];
+    if(!formData.name.trim())errors.push("Institute name is required");
+    if(!formData.institute_type)errors.push("Institute type is required");
+    if(!formData.turnover)errors.push("Turnover is required");
 
-    setSaving(true);
-    setError("");
-
-    const payload = {
-      name:           fields.name.trim(),
-      legal_name:     fields.legalName.trim(),
-      website:        fields.website.trim(),
-      source,
-      business_type:  businessType,
-      institute_type: instType,
-      domain,
-      inst_state:     instState,
-      estd_year:      fields.estd,
-      gst_registered: gst,
-      turnover:       fields.turnover.trim(),
-      monthly_volume: fields.monthlyVol,
-      avg_ticket:     fields.avgTicket,
-      contact_name:   fields.contactName.trim(),
-      contact_email:  fields.contactEmail.trim(),
-      contact_phone:  fields.contactPhone.trim(),
-      notes:          fields.notes,
-      status:         "LEAD_CREATED",
-      created_by:     currentUser.id,
-    };
-
-    const { data, error: err } = await supabase
-      .from("leads")
-      .insert(payload)
-      .select()
-      .single();
-
-    if (err) {
-      setError(err.message);
-      setSaving(false);
+    if(errors.length>0){
+      setError(errors.join(", "));
       return;
     }
 
-    if (payload.notes && data) {
-      await supabase.from("comments").insert({
-        lead_id:    data.id,
-        text:       payload.notes,
-        created_by: currentUser.id,
-        role:       currentUser.role,
-      });
-    }
+    setLoading(true);
+    setError("");
 
-    setSaving(false);
-    onSubmit();
+    try{
+      const {data,error:err}=await supabase.from("leads").insert({
+        name:formData.name,
+        legal_name:formData.legal_name,
+        institute_type:formData.institute_type,
+        business_type:formData.business_type,
+        estd_year:parseInt(formData.estd_year),
+        turnover:formData.turnover,
+        source:formData.source,
+        sample_fees:parseFloat(formData.sampleFees)||null,
+        roi:parseFloat(formData.roi)||null,
+        subvention:parseFloat(formData.subvention)||null,
+        tenure:parseInt(formData.tenure),
+        advance_emi:parseInt(formData.advanceEmi),
+        product:formData.product,
+        processing_fee:parseFloat(formData.processingFee)||null,
+        processing_fee_type:formData.processingFeeType,
+        status:"LEAD_CREATED",
+        created_by:currentUser.id,
+      }).select();
+
+      if(err){
+        setError(err.message||"Failed to create lead");
+        setLoading(false);
+        return;
+      }
+
+      setSuccess(true);
+      setTimeout(()=>{
+        onSubmit();
+      },1500);
+    }catch(err){
+      setError(err.message||"An error occurred");
+      setLoading(false);
+    }
   };
 
-  // ── style helpers (matches App.jsx fm-* design system) ──────────────────────
-  const ic  = (err) => `fm-input${err ? " error" : ""}`;
-  const sc  = (err) => `fm-select${err ? " error" : ""}`;
-  const Lbl = ({ t, req }) => (
-    <label className="fm-label">{t}{req ? " *" : ""}</label>
-  );
-  const Err = ({ k }) => errors[k]
-    ? <div className="fm-err">{errors[k]}</div>
-    : null;
+  if(success){
+    return(
+      <div style={{maxWidth:600,margin:"0 auto",padding:20}}>
+        <Alert type="success" message="✅ Lead created successfully! Redirecting..."/>
+      </div>
+    );
+  }
 
-  return (
-    <div style={{ maxWidth: "680px", margin: "0 auto" }}>
-      <div style={{ marginBottom: "20px" }}>
-        <div style={{ fontSize: "18px", fontWeight: 700, color: "var(--text)" }}>New Lead Intake</div>
-        <div style={{ fontSize: "13px", color: "var(--muted)", marginTop: "2px" }}>Fill in the institute details.</div>
+  const ic={width:"100%",border:"1px solid #e2e8f0",borderRadius:6,padding:"8px 10px",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box"};
+  const labelStyle={display:"block",fontSize:12,fontWeight:600,color:"#475569",marginBottom:4};
+
+  return(
+    <div style={{maxWidth:900,margin:"0 auto"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <h1 style={{fontSize:20,fontWeight:700,color:"#1e293b",margin:0}}>Create New Lead</h1>
+        <Btn variant="secondary" onClick={onCancel}>Cancel</Btn>
       </div>
 
-      {error && (
-        <div className="fm-alert error" style={{ marginBottom: "16px" }}>
-          <span>{error}</span>
-          <button className="fm-alert-close" onClick={() => setError("")}>×</button>
+      {error&&<Alert type="error" message={error} onClose={()=>setError("")}/>}
+
+      <div style={{background:"#fff",borderRadius:10,border:"1px solid #e2e8f0",padding:24}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}}>
+          <div>
+            <label style={labelStyle}>Institute Name *</label>
+            <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="e.g., St. Xavier's College" style={ic}/>
+          </div>
+          <div>
+            <label style={labelStyle}>Legal Name</label>
+            <input type="text" name="legal_name" value={formData.legal_name} onChange={handleChange} placeholder="Official registered name" style={ic}/>
+          </div>
         </div>
-      )}
 
-      <form onSubmit={handleSubmit}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}}>
+          <div>
+            <label style={labelStyle}>Institute Type *</label>
+            <select name="institute_type" value={formData.institute_type} onChange={handleChange} style={ic}>
+              <option value="">Select type...</option>
+              {INST_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>Business Type</label>
+            <select name="business_type" value={formData.business_type} onChange={handleChange} style={ic}>
+              <option value="">Select type...</option>
+              {BIZ_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+        </div>
 
-        {/* ── Institute Details ── */}
-        <div className="fm-card" style={{ marginBottom: "16px" }}>
-          <div className="fm-card-header"><span className="fm-card-title">Institute Details</span></div>
-          <div className="fm-card-body">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}}>
+          <div>
+            <label style={labelStyle}>Established Year</label>
+            <input type="number" name="estd_year" value={formData.estd_year} onChange={handleChange} style={ic}/>
+          </div>
+          <div>
+            <label style={labelStyle}>Annual Turnover *</label>
+            <input type="text" name="turnover" value={formData.turnover} onChange={handleChange} placeholder="e.g., ₹5 Cr" style={ic}/>
+          </div>
+        </div>
 
-              <div style={{ gridColumn: "1 / -1" }}>
-                <Lbl t="Institute Name" req />
-                <input value={fields.name} onChange={set("name")} placeholder="e.g. Monk Academy" className={ic(errors.name)} />
-                <Err k="name" />
-              </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}}>
+          <div>
+            <label style={labelStyle}>Lead Source</label>
+            <select name="source" value={formData.source} onChange={handleChange} style={ic}>
+              <option value="">Select source...</option>
+              {LEAD_SOURCES.map(s=><option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>Product</label>
+            <select name="product" value={formData.product} onChange={handleChange} style={ic}>
+              <option value="">Select product...</option>
+              {PRODUCTS.map(p=><option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+        </div>
 
-              <div style={{ gridColumn: "1 / -1" }}>
-                <Lbl t="Legal Entity Name" />
-                <input value={fields.legalName} onChange={set("legalName")} placeholder="e.g. Monk Education Trust" className="fm-input" />
-              </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:20}}>
+          <div>
+            <label style={labelStyle}>Sample Fees</label>
+            <input type="number" name="sampleFees" value={formData.sampleFees} onChange={handleChange} placeholder="Amount in ₹" style={ic}/>
+          </div>
+          <div>
+            <label style={labelStyle}>ROI %</label>
+            <input type="number" name="roi" value={formData.roi} onChange={handleChange} placeholder="%" style={ic}/>
+          </div>
+          <div>
+            <label style={labelStyle}>Subvention %</label>
+            <input type="number" name="subvention" value={formData.subvention} onChange={handleChange} placeholder="%" style={ic}/>
+          </div>
+        </div>
 
-              <div style={{ gridColumn: "1 / -1" }}>
-                <Lbl t="Website" />
-                <input value={fields.website} onChange={set("website")} placeholder="https://example.edu.in" className="fm-input" />
-              </div>
-
-              {/* Lead Source */}
-              <div>
-                <Lbl t="Lead Source" req />
-                <select value={source} onChange={e => setSource(e.target.value)} className={sc(errors.source)}>
-                  <option value="">Select…</option>
-                  {LEAD_SOURCES.map(o => <option key={o}>{o}</option>)}
-                </select>
-                <Err k="source" />
-              </div>
-
-              {/* Business Type */}
-              <div>
-                <Lbl t="Business Type" req />
-                <select value={businessType} onChange={e => setBizType(e.target.value)} className={sc(errors.businessType)}>
-                  <option value="">Select…</option>
-                  {BIZ_TYPES.map(o => <option key={o}>{o}</option>)}
-                </select>
-                <Err k="businessType" />
-              </div>
-
-              {/* Institute Type → clears Domain on change */}
-              <div>
-                <Lbl t="Institute Type" req />
-                <select
-                  value={instType}
-                  onChange={e => { setInstType(e.target.value); setDomain(""); }}
-                  className={sc(errors.instType)}>
-                  <option value="">Select…</option>
-                  {INST_TYPES.map(o => <option key={o}>{o}</option>)}
-                </select>
-                <Err k="instType" />
-              </div>
-
-              {/* Domain — cascades from Institute Type */}
-              <div>
-                <Lbl t="Domain" req />
-                <select
-                  value={domain}
-                  onChange={e => setDomain(e.target.value)}
-                  disabled={!instType}
-                  className={sc(errors.domain)}
-                  style={!instType ? { opacity: 0.6, cursor: "not-allowed" } : {}}>
-                  <option value="">{instType ? "Select domain…" : "Select Institute Type first"}</option>
-                  {(INST_DOMAINS[instType] || []).map(o => <option key={o}>{o}</option>)}
-                </select>
-                <Err k="domain" />
-              </div>
-
-              {/* Institute State */}
-              <div>
-                <Lbl t="Institute State" />
-                <select value={instState} onChange={e => setInstState(e.target.value)} className="fm-select">
-                  <option value="">Select state…</option>
-                  {INDIA_STATES.map(s => <option key={s}>{s}</option>)}
-                </select>
-              </div>
-
-              {/* Established Year */}
-              <div>
-                <Lbl t="Established Year" req />
-                <input value={fields.estd} onChange={set("estd")} placeholder="e.g. 2005" className={ic(errors.estd)} />
-                <Err k="estd" />
-              </div>
-
-              {/* GST toggle */}
-              <div style={{ gridColumn: "1 / -1" }}>
-                <div style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  background: "var(--grey-bg)", border: "1px solid var(--border)",
-                  borderRadius: "8px", padding: "12px 16px"
-                }}>
-                  <div>
-                    <div style={{ fontSize: "13px", fontWeight: 600 }}>GST Registered?</div>
-                    <div style={{ fontSize: "12px", color: "var(--muted)", marginTop: "2px" }}>
-                      Toggle on if the institute has an active GST registration
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setGst(p => !p)}
-                    className={"fm-toggle " + (gst ? "on" : "off")}>
-                    <span className="fm-toggle-knob" />
-                  </button>
-                </div>
-              </div>
-
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:20}}>
+          <div>
+            <label style={labelStyle}>Tenure (Months)</label>
+            <select name="tenure" value={formData.tenure} onChange={handleChange} style={ic}>
+              {TENURE_OPTIONS.map(t=><option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>Advance EMI</label>
+            <select name="advanceEmi" value={formData.advanceEmi} onChange={handleChange} style={ic}>
+              {ADVANCE_EMI_OPTIONS.map(a=><option key={a} value={a}>{a}</option>)}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>Processing Fee</label>
+            <div style={{display:"flex",gap:8}}>
+              <input type="number" name="processingFee" value={formData.processingFee} onChange={handleChange} placeholder="Amount" style={{...ic,flex:1}}/>
+              <select name="processingFeeType" value={formData.processingFeeType} onChange={handleChange} style={{...ic,flex:0.3}}>
+                <option value="%">%</option>
+                <option value="₹">₹</option>
+              </select>
             </div>
           </div>
         </div>
 
-        {/* ── Financial Profile ── */}
-        <div className="fm-card" style={{ marginBottom: "16px" }}>
-          <div className="fm-card-header"><span className="fm-card-title">Financial Profile</span></div>
-          <div className="fm-card-body">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
-              <div>
-                <Lbl t="Annual Turnover" req />
-                <input value={fields.turnover} onChange={set("turnover")} placeholder="e.g. 12 Cr" className={ic(errors.turnover)} />
-                <Err k="turnover" />
-              </div>
-              <div>
-                <Lbl t="Monthly Volume (Sales)" req />
-                <input value={fields.monthlyVol} onChange={set("monthlyVol")} placeholder="e.g. 450" className={ic(errors.monthlyVol)} />
-                <Err k="monthlyVol" />
-              </div>
-              <div>
-                <Lbl t="Avg Course Ticket (₹)" req />
-                <input value={fields.avgTicket} onChange={set("avgTicket")} placeholder="e.g. 85000" className={ic(errors.avgTicket)} />
-                <Err k="avgTicket" />
-              </div>
-            </div>
-          </div>
+        <div style={{display:"flex",gap:12,paddingTop:12,borderTop:"1px solid #e2e8f0"}}>
+          <Btn variant="primary" onClick={handleSubmit} disabled={loading}>{loading?"Creating...":"Create Lead"}</Btn>
+          <Btn variant="secondary" onClick={onCancel}>Cancel</Btn>
         </div>
-
-        {/* ── Primary Contact ── */}
-        <div className="fm-card" style={{ marginBottom: "20px" }}>
-          <div className="fm-card-header"><span className="fm-card-title">Primary Contact</span></div>
-          <div className="fm-card-body">
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-              <div>
-                <Lbl t="Contact Name" />
-                <input value={fields.contactName} onChange={set("contactName")} placeholder="Full name" className="fm-input" />
-              </div>
-              <div>
-                <Lbl t="Email" req />
-                <input value={fields.contactEmail} onChange={set("contactEmail")} type="email" placeholder="email@institute.com" className={ic(errors.contactEmail)} />
-                <Err k="contactEmail" />
-              </div>
-              <div>
-                <Lbl t="Phone" />
-                <input value={fields.contactPhone} onChange={set("contactPhone")} placeholder="+91 98XXX XXXXX" className="fm-input" />
-              </div>
-            </div>
-            <div>
-              <Lbl t="Internal Notes" />
-              <textarea
-                value={fields.notes}
-                onChange={set("notes")}
-                rows={2}
-                placeholder="Any context for Management…"
-                className="fm-textarea"
-                style={{ resize: "none" }}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button type="submit" disabled={saving} className="fm-btn fm-btn-primary">
-            {saving ? "Submitting…" : "Submit Lead"}
-          </button>
-          <button type="button" onClick={onCancel} className="fm-btn fm-btn-ghost">
-            Cancel
-          </button>
-        </div>
-
-      </form>
+      </div>
     </div>
   );
 }
