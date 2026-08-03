@@ -3,6 +3,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "./supabase";
 import NewLead from "./NewLead.jsx";
 import Dashboard from "./Dashboard.jsx";
+import Users from "./Users.jsx"; 
+import ProposalBuilder from "./ProposalBuilder.jsx"; 
+import UserManagement from "./Users.jsx";
+import Pipeline from "./Pipeline.jsx";
 
 const TENURE_OPTIONS = [3,6,9,10,12,15,18,21,24,27,30,33,36];
 const PRODUCTS = ["SV GST","SV Non GST","STD ROI","HYBRID"];
@@ -230,57 +234,6 @@ function LeadDetail({leadId,currentUser,onBack,onRefresh}){
   );
 }
 
-// ── Pipeline ──────────────────────────────────────────────────────────────────
-function Pipeline({currentUser,onSelectLead,refreshKey}){
-  const [leads,setLeads]=useState([]);
-  const [loading,setLoading]=useState(true);
-  const [filterStatus,setFilterStatus]=useState("ALL");
-
-  // ✅ FIXED: Added refreshKey to dependency array to reload when parent refreshes
-  useEffect(()=>{loadLeads();},[refreshKey]);
-  
-  const loadLeads=async()=>{
-    setLoading(true);
-    let q=supabase.from("leads").select("*, users!leads_created_by_fkey(name,role)").order("created_at",{ascending:false});
-    if(currentUser.role!=="Management")q=q.eq("created_by",currentUser.id);
-    const {data}=await q;
-    setLeads(data||[]);setLoading(false);
-  };
-  const filtered=filterStatus==="ALL"?leads:leads.filter(l=>l.status===filterStatus);
-
-  return(
-    <div>
-      <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
-        {["ALL",...Object.keys(STATUS_META)].map(s=>{
-          const m=STATUS_META[s];
-          const active=filterStatus===s;
-          return <button key={s} onClick={()=>setFilterStatus(s)} style={{padding:"5px 12px",borderRadius:20,border:"1px solid",borderColor:active?"#2563eb":"#e2e8f0",background:active?"#2563eb":"#fff",color:active?"#fff":"#64748b",fontSize:11,fontWeight:600,cursor:"pointer",transition:"all .15s"}}>{s==="ALL"?"All":m.label}</button>;
-        })}
-      </div>
-      {loading?<Spinner/>:(
-        <div style={S.card}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
-            <thead><tr>{["Institute","Created By","Source","Turnover","Status","Progress","Date"].map(h=><th key={h} style={S.th}>{h}</th>)}</tr></thead>
-            <tbody>
-              {filtered.length===0&&<tr><td colSpan={7} style={{textAlign:"center",padding:40,color:"#94a3b8",fontSize:13}}>No leads found.</td></tr>}
-              {filtered.map(l=>(
-                <tr key={l.id} onClick={()=>onSelectLead(l.id)} style={{borderBottom:"1px solid #f8fafc",cursor:"pointer",transition:"background .1s"}} onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"} onMouseLeave={e=>e.currentTarget.style.background=""}>
-                  <td style={S.td}><div style={{fontWeight:600,color:"#1e293b"}}>{l.name}</div>{l.legal_name&&l.legal_name!==l.name&&<div style={{fontSize:11,color:"#94a3b8",marginTop:1}}>{l.legal_name}</div>}</td>
-                  <td style={{...S.td,color:"#64748b",fontSize:12}}>{l.users?.name}</td>
-                  <td style={S.td}>{l.source?<span style={{fontSize:11,fontWeight:600,padding:"3px 8px",borderRadius:12,background:"#eff6ff",color:"#2563eb"}}>{l.source}</span>:"--"}</td>
-                  <td style={{...S.td,color:"#64748b"}}>{l.turnover}</td>
-                  <td style={S.td}><Badge status={l.status}/></td>
-                  <td style={S.td}><StepBar status={l.status}/></td>
-                  <td style={{...S.td,color:"#94a3b8",fontSize:12}}>{new Date(l.created_at).toLocaleDateString("en-IN")}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ── App ───────────────────────────────────────────────────────────────────────
 export { Btn, Alert };
@@ -369,6 +322,7 @@ export default function App(){
               <Pipeline currentUser={currentUser} onSelectLead={id=>{setSelectedLeadId(id);setView("pipeline");}} refreshKey={refreshTrigger}/>
             </div>
           )}
+          {view==="users"&&isMgmt&&<UserManagement currentUser={currentUser}/>}
         </div>
       </div>
     </div>
