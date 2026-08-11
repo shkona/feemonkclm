@@ -7,6 +7,7 @@ import Users from "./Users.jsx";
 import ProposalBuilder from "./ProposalBuilder.jsx"; 
 import UserManagement from "./Users.jsx";
 import Pipeline from "./Pipeline.jsx";
+import LeadDetail from "./LeadDetail.jsx";  
 
 const TENURE_OPTIONS = [3,6,9,10,12,15,18,21,24,27,30,33,36];
 const PRODUCTS = ["SV GST","SV Non GST","STD ROI","HYBRID"];
