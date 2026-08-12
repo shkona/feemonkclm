@@ -5,7 +5,10 @@ import Dashboard from "./Dashboard.jsx";
 import UserManagement from "./Users.jsx"; 
 import ProposalBuilder from "./ProposalBuilder.jsx"; 
 import Pipeline from "./Pipeline.jsx";
-import LeadDetail from "./LeadDetail.jsx";  
+import LeadDetail from "./LeadDetail.jsx"; 
+import VisitLog from "./VisitLog.jsx";
+import VisitsCalendar from "./VisitsCalendar.jsx";
+import FunnelSuccess from "./FunnelSuccess.jsx"; 
 
 const INST_TYPES = ["Engineering College","Medical College","K-12 School","Skill Dev Institute","University","Management Institute","Polytechnic","Other"];
 const BIZ_TYPES = ["Trust/Society","Private Limited","Partnership Firm","LLP","Proprietorship","Other"];
@@ -117,11 +120,13 @@ export default function App(){
 
   const isMgmt=currentUser.role==="Management";
   const navItems=[
-    {id:"dashboard",icon:"📊",label:"Dashboard"},
-    {id:"pipeline",icon:"📋",label:"Pipeline"},
-    ...(isMgmt?[{id:"approvals",icon:"✅",label:"Approvals"},{id:"users",icon:"👥",label:"Users"}]:[]),
-  ];
-  const pageTitle={dashboard:"Dashboard",pipeline:"Pipeline",approvals:"Pending Approvals",users:"User Management",new:"New Lead"};
+  {id:"dashboard",icon:"📊",label:"Dashboard"},
+  {id:"pipeline",icon:"📋",label:"Pipeline"},
+  {id:"visits",icon:"📍",label:"Visits"},
+  {id:"funnel",icon:"📈",label:"Funnel Success"},
+  ...(isMgmt?[{id:"approvals",icon:"✅",label:"Approvals"},{id:"users",icon:"👥",label:"Users"}]:[]),
+];
+  const pageTitle={dashboard:"Dashboard",pipeline:"Pipeline",approvals:"Pending Approvals",users:"User Management",visits:"Visits",funnel:"Funnel Success",new:"New Lead"};
   const roleColors={Sales:{background:"#2563eb"},["Channel Partner"]:{background:"#d97706"},Management:{background:"#6d28d9"}};
 
   return(
@@ -179,6 +184,9 @@ export default function App(){
             </div>
           )}
           {view==="users"&&isMgmt&&<UserManagement currentUser={currentUser}/>}
+          {view==="visits"&&<VisitsCalendar currentUser={currentUser}/>}
+{view==="funnel"&&<FunnelSuccess currentUser={currentUser}/>}
+{view==="new"&&<NewLead currentUser={currentUser} onSubmit={()=>setView("pipeline")} onCancel={()=>setView("dashboard")}/>}
         </div>
       </div>
     </div>

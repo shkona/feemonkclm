@@ -39,6 +39,25 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
     }
   };
 
+  const approveLead=async()=>{
+    try{
+      const {error}=await supabase.from("leads").update({
+        status:"MGMT_VETTED",
+      }).eq("id",leadId);
+
+      if(error)throw error;
+
+      // Update local state
+      setLead({...lead,status:"MGMT_VETTED"});
+
+      // Refresh parent data
+      if(onRefresh)onRefresh();
+    }catch(err){
+      console.error("Error approving lead:",err);
+      alert("Failed to approve lead");
+    }
+  };
+
   const rejectLead=async()=>{
     if(!rejectionReason.trim()){
       alert("Please enter rejection reason");
@@ -168,17 +187,32 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
         )}
 
         {/* Action Buttons */}
-        <div style={{display:"flex",gap:12,paddingTop:20,borderTop:"1px solid #e2e8f0"}}>
-          {lead.status!=="REJECTED"&&lead.status!=="COMPLETED"&&isManagement&&(
+        <div style={{display:"flex",gap:12,paddingTop:20,borderTop:"1px solid #e2e8f0",flexWrap:"wrap"}}>
+          {isManagement&&(
             <>
-              <button 
-                onClick={()=>onNavigate("proposal",{leadId:lead.id})}
-                style={{background:"#2563eb",color:"#fff",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
-              >+ Create Proposal</button>
-              <button 
-                onClick={()=>setShowRejectModal(true)}
-                style={{background:"#fee2e2",color:"#b91c1c",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
-              >Reject Lead</button>
+              {/* Show Approve button only if LEAD_CREATED */}
+              {lead.status==="LEAD_CREATED"&&(
+                <button 
+                  onClick={approveLead}
+                  style={{background:"#10b981",color:"#fff",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
+                >✓ Approve Lead</button>
+              )}
+
+              {/* Show Create Proposal if not rejected/completed */}
+              {lead.status!=="REJECTED"&&lead.status!=="COMPLETED"&&(
+                <button 
+                  onClick={()=>onNavigate("proposal",{leadId:lead.id})}
+                  style={{background:"#2563eb",color:"#fff",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
+                >+ Create Proposal</button>
+              )}
+
+              {/* Show Reject button if not already rejected/completed */}
+              {lead.status!=="REJECTED"&&lead.status!=="COMPLETED"&&(
+                <button 
+                  onClick={()=>setShowRejectModal(true)}
+                  style={{background:"#fee2e2",color:"#b91c1c",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
+                >Reject Lead</button>
+              )}
             </>
           )}
           <button 
