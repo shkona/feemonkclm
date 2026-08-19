@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
+import ActivityLog from "./ActivityLog.jsx";
 
 const STATUS_META = {
   LEAD_CREATED:       {label:"Lead Created",       color:"#64748b", bg:"#f1f5f9"},
@@ -14,6 +15,16 @@ const STATUS_META = {
 function Badge({status}){
   const m=STATUS_META[status]||STATUS_META.LEAD_CREATED;
   return <span style={{display:"inline-flex",alignItems:"center",padding:"4px 10px",borderRadius:20,fontSize:11,fontWeight:600,whiteSpace:"nowrap",background:m.bg,color:m.color}}>{m.label}</span>;
+}
+
+function extractDomain(url){
+  if(!url)return null;
+  try{
+    const urlObj=new URL(url);
+    return urlObj.hostname.replace(/^www\./,"");
+  }catch{
+    return url;
+  }
 }
 
 export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefresh}){
@@ -47,10 +58,8 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
 
       if(error)throw error;
 
-      // Update local state
       setLead({...lead,status:"MGMT_VETTED"});
 
-      // Refresh parent data
       if(onRefresh)onRefresh();
     }catch(err){
       console.error("Error approving lead:",err);
@@ -75,10 +84,8 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
 
       if(error)throw error;
 
-      // Refresh parent data
       if(onRefresh)onRefresh();
 
-      // Auto-navigate back
       setTimeout(()=>onBack(),500);
     }catch(err){
       console.error("Error rejecting lead:",err);
@@ -92,7 +99,6 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
   if(!lead)return <div style={{padding:20,color:"#ef4444"}}>Lead not found</div>;
 
   const isManagement=currentUser.role==="Management";
-  const isCreator=lead.created_by===currentUser.id;
 
   return(
     <div>
@@ -125,7 +131,7 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
 
             <div style={{marginBottom:16}}>
               <label style={{fontSize:10,fontWeight:600,color:"#475569",textTransform:"uppercase",letterSpacing:".4px"}}>Website</label>
-              {lead.website?<a href={lead.website} target="_blank" rel="noopener noreferrer" style={{fontSize:13,color:"#2563eb",textDecoration:"none",margin:"4px 0 0"}}>Visit →</a>:<p style={{fontSize:14,color:"#1e293b",margin:"4px 0 0"}}>--</p>}
+              {lead.website?<a href={lead.website} target="_blank" rel="noopener noreferrer" style={{fontSize:13,color:"#2563eb",textDecoration:"none",margin:"4px 0 0"}}>{extractDomain(lead.website)} →</a>:<p style={{fontSize:14,color:"#1e293b",margin:"4px 0 0"}}>--</p>}
             </div>
 
             <div style={{marginBottom:16}}>
@@ -137,6 +143,7 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
               <label style={{fontSize:10,fontWeight:600,color:"#475569",textTransform:"uppercase",letterSpacing:".4px"}}>Contact Person</label>
               <p style={{fontSize:14,fontWeight:600,color:"#1e293b",margin:"4px 0 0"}}>{lead.contact_name||"--"}</p>
               {lead.contact_email&&<p style={{fontSize:12,color:"#64748b",margin:"2px 0 0"}}>{lead.contact_email}</p>}
+              {lead.contact_phone&&<p style={{fontSize:12,color:"#64748b",margin:"2px 0 0"}}>{lead.contact_phone}</p>}
             </div>
           </div>
 
@@ -220,6 +227,11 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
             style={{background:"#fff",color:"#475569",border:"1px solid #e2e8f0",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit",marginLeft:"auto"}}
           >Close</button>
         </div>
+      </div>
+
+      {/* Activity Log */}
+      <div style={{marginTop:24}}>
+        <ActivityLog type="lead" recordId={lead.id} currentUser={currentUser}/>
       </div>
 
       {/* Rejection Modal */}

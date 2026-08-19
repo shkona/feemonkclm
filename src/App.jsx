@@ -9,6 +9,7 @@ import LeadDetail from "./LeadDetail.jsx";
 import VisitLog from "./VisitLog.jsx";
 import VisitsCalendar from "./VisitsCalendar.jsx";
 import FunnelSuccess from "./FunnelSuccess.jsx"; 
+import Reports from "./Reports.jsx";
 
 const INST_TYPES = ["Engineering College","Medical College","K-12 School","Skill Dev Institute","University","Management Institute","Polytechnic","Other"];
 const BIZ_TYPES = ["Trust/Society","Private Limited","Partnership Firm","LLP","Proprietorship","Other"];
@@ -124,9 +125,10 @@ export default function App(){
   {id:"pipeline",icon:"📋",label:"Pipeline"},
   {id:"visits",icon:"📍",label:"Visits"},
   {id:"funnel",icon:"📈",label:"Funnel Success"},
+  {id:"reports",icon:"📊",label:"Reports"},
   ...(isMgmt?[{id:"approvals",icon:"✅",label:"Approvals"},{id:"users",icon:"👥",label:"Users"}]:[]),
 ];
-  const pageTitle={dashboard:"Dashboard",pipeline:"Pipeline",approvals:"Pending Approvals",users:"User Management",visits:"Visits",funnel:"Funnel Success",new:"New Lead"};
+const pageTitle={dashboard:"Dashboard",pipeline:"Pipeline",approvals:"Pending Approvals",users:"User Management",visits:"Visits",funnel:"Funnel Success",reports:"Reports",new:"New Lead"};
   const roleColors={Sales:{background:"#2563eb"},["Channel Partner"]:{background:"#d97706"},Management:{background:"#6d28d9"}};
 
   return(
@@ -187,6 +189,7 @@ export default function App(){
           {view==="visits"&&<VisitsCalendar currentUser={currentUser}/>}
 {view==="funnel"&&<FunnelSuccess currentUser={currentUser}/>}
 {view==="new"&&<NewLead currentUser={currentUser} onSubmit={()=>setView("pipeline")} onCancel={()=>setView("dashboard")}/>}
+  {view==="reports"&&<Reports currentUser={currentUser}/>}
         </div>
       </div>
     </div>
