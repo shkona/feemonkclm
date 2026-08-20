@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
+import { exportToCSV } from "./exportUtils.js";
 
 export default function ProspectsReport({currentUser}){
   const [visits,setVisits]=useState([]);
@@ -49,8 +50,30 @@ export default function ProspectsReport({currentUser}){
     }
   };
 
+  const handleExport=()=>{
+    // Format data for export
+    const exportData=visits.map(visit=>({
+      "Prospect Name":visit.prospect_name,
+      "Type":visit.prospect_type,
+      "Visit Date":new Date(visit.visit_date).toLocaleDateString("en-IN"),
+      "Remarks":visit.remarks||"--"
+    }));
+    
+    exportToCSV(exportData,"Prospects_Report");
+  };
+
   return(
     <div>
+      {/* Export Button */}
+      <div style={{display:"flex",justifyContent:"flex-end",marginBottom:16}}>
+        <button 
+          onClick={handleExport}
+          disabled={visits.length===0}
+          style={{background:"#059669",color:"#fff",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:visits.length===0?"not-allowed":"pointer",opacity:visits.length===0?0.5:1,fontFamily:"inherit",display:"flex",alignItems:"center",gap:8}}
+        >
+          📥 Export to CSV
+        </button>
+      </div>
       {/* Filters */}
       <div style={{background:"#fff",borderRadius:10,border:"1px solid #e2e8f0",padding:16,marginBottom:20}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16,alignItems:"flex-end",flexWrap:"wrap"}}>

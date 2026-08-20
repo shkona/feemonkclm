@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
+import { exportToCSV } from "./exportUtils.js";
 
 export default function LeadsReport({currentUser}){
   const [leads,setLeads]=useState([]);
@@ -96,6 +97,18 @@ export default function LeadsReport({currentUser}){
     }
   };
 
+  const handleExport=()=>{
+    // Format data for export
+    const exportData=leads.map(lead=>({
+      "Lead Name":lead.name,
+      "Associate":lead.users?.name||"--",
+      "Created Date":new Date(lead.created_at).toLocaleDateString("en-IN"),
+      "Status":lead.status||"UNKNOWN"
+    }));
+    
+    exportToCSV(exportData,"Leads_Report");
+  };
+
   const STATUS_COLORS={
     "LEAD_CREATED":"#64748b",
     "MGMT_VETTED":"#2563eb",
@@ -109,6 +122,17 @@ export default function LeadsReport({currentUser}){
   return(
     <div>
       {error&&<div style={{background:"#fee2e2",border:"1px solid #fca5a5",borderRadius:8,padding:12,marginBottom:16,color:"#b91c1c",fontSize:12}}>⚠️ {error}</div>}
+
+      {/* Export Button */}
+      <div style={{display:"flex",justifyContent:"flex-end",marginBottom:16}}>
+        <button 
+          onClick={handleExport}
+          disabled={leads.length===0}
+          style={{background:"#059669",color:"#fff",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:leads.length===0?"not-allowed":"pointer",opacity:leads.length===0?0.5:1,fontFamily:"inherit",display:"flex",alignItems:"center",gap:8}}
+        >
+          📥 Export to CSV
+        </button>
+      </div>
 
       {/* Filters */}
       <div style={{background:"#fff",borderRadius:10,border:"1px solid #e2e8f0",padding:16,marginBottom:20}}>
