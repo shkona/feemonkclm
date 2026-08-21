@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
 import ActivityLog from "./ActivityLog.jsx";
 import AddFollowUpModal from "./AddFollowUpModal.jsx";
+import TransferLeadOwnerModal from "./TransferLeadOwnerModal.jsx";
 
 const STATUS_META = {
   LEAD_CREATED:       {label:"Lead Created",       color:"#64748b", bg:"#f1f5f9"},
@@ -35,6 +36,9 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
   const [rejectionReason,setRejectionReason]=useState("");
   const [rejecting,setRejecting]=useState(false);
   const [showFollowUpModal,setShowFollowUpModal]=useState(false);
+  const [showTransferModal,setShowTransferModal]=useState(false);
+  const [showStatusModal,setShowStatusModal]=useState(false);
+  const [newStatus,setNewStatus]=useState("");
 
   useEffect(()=>{
     loadLead();
@@ -66,6 +70,30 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
     }catch(err){
       console.error("Error approving lead:",err);
       alert("Failed to approve lead");
+    }
+  };
+
+  const changeStatus=async()=>{
+    if(!newStatus){
+      alert("Please select a status");
+      return;
+    }
+
+    try{
+      const {error}=await supabase.from("leads").update({
+        status:newStatus,
+      }).eq("id",leadId);
+
+      if(error)throw error;
+
+      setLead({...lead,status:newStatus});
+      setShowStatusModal(false);
+      setNewStatus("");
+
+      if(onRefresh)onRefresh();
+    }catch(err){
+      console.error("Error changing status:",err);
+      alert("Failed to change status");
     }
   };
 
@@ -167,7 +195,7 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
             </div>
 
             <div style={{marginBottom:16}}>
-              <label style={{fontSize:10,fontWeight:600,color:"#475569",textTransform:"uppercase",letterSpacing:".4px"}}>Created By</label>
+              <label style={{fontSize:10,fontWeight:600,color:"#475569",textTransform:"uppercase",letterSpacing:".4px"}}>Current Owner</label>
               <p style={{fontSize:14,fontWeight:600,color:"#1e293b",margin:"4px 0 0"}}>{lead.users?.name||"Unknown"}</p>
               {lead.users?.email&&<p style={{fontSize:12,color:"#64748b",margin:"2px 0 0"}}>{lead.users.email}</p>}
             </div>
@@ -231,6 +259,20 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
                   style={{background:"#fee2e2",color:"#b91c1c",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
                 >Reject Lead</button>
               )}
+
+              {/* Transfer Owner button */}
+              <button 
+                onClick={()=>setShowTransferModal(true)}
+                style={{background:"#f59e0b",color:"#fff",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
+              >👤 Transfer Owner</button>
+
+              {/* Change Status button for rejected leads */}
+              {lead.status==="REJECTED"&&(
+                <button 
+                  onClick={()=>setShowStatusModal(true)}
+                  style={{background:"#8b5cf6",color:"#fff",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
+                >🔄 Change Status</button>
+              )}
             </>
           )}
 
@@ -260,9 +302,56 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
           type="lead" 
           recordId={lead.id} 
           currentUser={currentUser}
-          onClose={()=>setShowFollowUpModal(false)}
+          onClose={()=>setFollowUpModal(false)}
           onSuccess={()=>{loadLead();if(onRefresh)onRefresh();}}
         />
+      )}
+
+      {/* Transfer Owner Modal */}
+      {showTransferModal&&(
+        <TransferLeadOwnerModal 
+          leadId={lead.id}
+          currentOwner={lead.created_by}
+          onClose={()=>setShowTransferModal(false)}
+          onSuccess={()=>{loadLead();if(onRefresh)onRefresh();}}
+        />
+      )}
+
+      {/* Change Status Modal */}
+      {showStatusModal&&(
+        <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}}>
+          <div style={{background:"#fff",borderRadius:10,padding:24,maxWidth:400,width:"90%",boxShadow:"0 10px 25px rgba(0,0,0,0.2)"}}>
+            <h2 style={{fontSize:16,fontWeight:700,color:"#1e293b",margin:"0 0 16px"}}>Change Lead Status</h2>
+            
+            <div style={{marginBottom:20}}>
+              <label style={{display:"block",fontSize:12,fontWeight:600,color:"#475569",marginBottom:8}}>Select New Status</label>
+              <select 
+                value={newStatus}
+                onChange={e=>setNewStatus(e.target.value)}
+                style={{width:"100%",border:"1px solid #e2e8f0",borderRadius:6,padding:"10px",fontSize:13,fontFamily:"inherit",boxSizing:"border-box",outline:"none"}}
+              >
+                <option value="">-- Select Status --</option>
+                <option value="LEAD_CREATED">Lead Created</option>
+                <option value="MGMT_VETTED">Mgmt Vetted</option>
+                <option value="PROPOSAL_IN_REVIEW">Proposal In Review</option>
+                <option value="PROPOSAL_APPROVED">Proposal Approved</option>
+                <option value="MOU_IN_PROGRESS">MOU In Progress</option>
+                <option value="COMPLETED">Completed</option>
+              </select>
+            </div>
+
+            <div style={{display:"flex",gap:12}}>
+              <button 
+                onClick={changeStatus}
+                style={{flex:1,background:"#8b5cf6",color:"#fff",border:"none",borderRadius:6,padding:"10px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
+              >Change Status</button>
+              <button 
+                onClick={()=>{setShowStatusModal(false);setNewStatus("");}}
+                style={{flex:1,background:"#fff",color:"#475569",border:"1px solid #e2e8f0",borderRadius:6,padding:"10px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
+              >Cancel</button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Rejection Modal */}
