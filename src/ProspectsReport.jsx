@@ -37,7 +37,7 @@ export default function ProspectsReport({currentUser}){
   const loadVisits=async()=>{
     setLoading(true);
     try{
-      let q=supabase.from("visits").select("id,prospect_name,prospect_type,visit_date,remarks").gte("visit_date",filterFromDate).lte("visit_date",filterToDate).order("visit_date",{ascending:false});
+      let q=supabase.from("visits").select("id,prospect_name,prospect_type,visit_date,remarks,next_followup_date,next_followup_time").gte("visit_date",filterFromDate).lte("visit_date",filterToDate).order("visit_date",{ascending:false});
       
       if(filterType)q=q.eq("prospect_type",filterType);
       
@@ -125,6 +125,7 @@ export default function ProspectsReport({currentUser}){
                   <th style={{padding:"12px 16px",textAlign:"left",fontSize:11,fontWeight:600,color:"#475569",textTransform:"uppercase"}}>Prospect Name</th>
                   <th style={{padding:"12px 16px",textAlign:"left",fontSize:11,fontWeight:600,color:"#475569",textTransform:"uppercase"}}>Type</th>
                   <th style={{padding:"12px 16px",textAlign:"left",fontSize:11,fontWeight:600,color:"#475569",textTransform:"uppercase"}}>Visit Date</th>
+                  <th style={{padding:"12px 16px",textAlign:"left",fontSize:11,fontWeight:600,color:"#475569",textTransform:"uppercase"}}>Next Follow-up</th>
                   <th style={{padding:"12px 16px",textAlign:"left",fontSize:11,fontWeight:600,color:"#475569",textTransform:"uppercase"}}>Remarks</th>
                 </tr>
               </thead>
@@ -134,6 +135,14 @@ export default function ProspectsReport({currentUser}){
                     <td style={{padding:"12px 16px",fontSize:13,color:"#1e293b",fontWeight:500}}>{visit.prospect_name}</td>
                     <td style={{padding:"12px 16px",fontSize:13,color:"#1e293b"}}>{visit.prospect_type}</td>
                     <td style={{padding:"12px 16px",fontSize:13,color:"#1e293b"}}>{new Date(visit.visit_date).toLocaleDateString("en-IN")}</td>
+                    <td style={{padding:"12px 16px",fontSize:13,color:visit.next_followup_date?"#b45309":"#94a3b8"}}>
+                      {visit.next_followup_date?
+                        <>
+                          {new Date(visit.next_followup_date).toLocaleDateString("en-IN")}<br/>
+                          <span style={{fontSize:11,color:"#64748b"}}>{visit.next_followup_time}</span>
+                        </>
+                      :"--"}
+                    </td>
                     <td style={{padding:"12px 16px",fontSize:13,color:"#64748b",maxWidth:300,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
                       {visit.remarks||"--"}
                     </td>

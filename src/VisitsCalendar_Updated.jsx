@@ -87,10 +87,6 @@ export default function VisitsCalendar({currentUser}){
     return mode==="Online"?"💻 Online":"📍 Field";
   };
 
-  if(showLogForm){
-    return <VisitLog currentUser={currentUser} onSubmit={()=>{setShowLogForm(false);loadVisits();}} onCancel={()=>setShowLogForm(false)}/>;
-  }
-
   return(
     <div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
@@ -256,17 +252,17 @@ export default function VisitsCalendar({currentUser}){
           )}
         </div>
       )}
-
-      {/* Follow-up Modal */}
-      {selectedVisitForFollowUp&&(
-        <AddFollowUpModal 
-          type="visit" 
-          recordId={selectedVisitForFollowUp.id} 
-          currentUser={currentUser}
-          onClose={()=>setSelectedVisitForFollowUp(null)}
-          onSuccess={()=>{setSelectedVisitForFollowUp(null);loadVisits();}}
-        />
-      )}
     </div>
-  );
+
+    {/* Follow-up Modal */}
+    {selectedVisitForFollowUp&&(
+      <AddFollowUpModal 
+        type="visit" 
+        recordId={selectedVisitForFollowUp.id} 
+        currentUser={currentUser}
+        onClose={()=>setSelectedVisitForFollowUp(null)}
+        onSuccess={()=>{setSelectedVisitForFollowUp(null);loadVisits();}}
+      />
+    )}
+  </div>;
 }

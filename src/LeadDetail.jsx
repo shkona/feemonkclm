@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
 import ActivityLog from "./ActivityLog.jsx";
+import AddFollowUpModal from "./AddFollowUpModal.jsx";
 
 const STATUS_META = {
   LEAD_CREATED:       {label:"Lead Created",       color:"#64748b", bg:"#f1f5f9"},
@@ -33,6 +34,7 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
   const [showRejectModal,setShowRejectModal]=useState(false);
   const [rejectionReason,setRejectionReason]=useState("");
   const [rejecting,setRejecting]=useState(false);
+  const [showFollowUpModal,setShowFollowUpModal]=useState(false);
 
   useEffect(()=>{
     loadLead();
@@ -174,6 +176,15 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
               <label style={{fontSize:10,fontWeight:600,color:"#475569",textTransform:"uppercase",letterSpacing:".4px"}}>Created On</label>
               <p style={{fontSize:14,fontWeight:600,color:"#1e293b",margin:"4px 0 0"}}>{new Date(lead.created_at).toLocaleDateString("en-IN")}</p>
             </div>
+
+            {lead.next_followup_date&&(
+              <div style={{marginBottom:16,background:"#fef3c7",border:"1px solid #fcd34d",borderRadius:6,padding:12}}>
+                <label style={{fontSize:10,fontWeight:600,color:"#92400e",textTransform:"uppercase",letterSpacing:".4px",display:"block",marginBottom:4}}>📅 Next Follow-up</label>
+                <p style={{fontSize:14,fontWeight:600,color:"#b45309",margin:0}}>
+                  {new Date(lead.next_followup_date).toLocaleDateString("en-IN")} at {lead.next_followup_time}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -222,6 +233,15 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
               )}
             </>
           )}
+
+          {/* Add Follow-up button - available to all */}
+          {lead.status!=="REJECTED"&&lead.status!=="COMPLETED"&&(
+            <button 
+              onClick={()=>setShowFollowUpModal(true)}
+              style={{background:"#7c3aed",color:"#fff",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
+            >📅 Add Follow-up</button>
+          )}
+
           <button 
             onClick={onBack}
             style={{background:"#fff",color:"#475569",border:"1px solid #e2e8f0",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit",marginLeft:"auto"}}
@@ -233,6 +253,17 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
       <div style={{marginTop:24}}>
         <ActivityLog type="lead" recordId={lead.id} currentUser={currentUser}/>
       </div>
+
+      {/* Follow-up Modal */}
+      {showFollowUpModal&&(
+        <AddFollowUpModal 
+          type="lead" 
+          recordId={lead.id} 
+          currentUser={currentUser}
+          onClose={()=>setShowFollowUpModal(false)}
+          onSuccess={()=>{loadLead();if(onRefresh)onRefresh();}}
+        />
+      )}
 
       {/* Rejection Modal */}
       {showRejectModal&&(

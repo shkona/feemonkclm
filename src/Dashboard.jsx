@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
+import FollowUpsSummary from "./FollowUpsSummary.jsx";
+
 
 const STATUS_META = {
   LEAD_CREATED:       {label:"Lead Created",       color:"#64748b", bg:"#f1f5f9"},
@@ -63,6 +65,7 @@ export default function Dashboard({currentUser,onNavigate}){
 
   return(
     <div>
+      
       {/* Header */}
       <div style={{marginBottom:24}}>
         <h1 style={{fontSize:24,fontWeight:700,color:"#1e293b",margin:0}}>Welcome back, {currentUser.name}!</h1>
@@ -71,6 +74,7 @@ export default function Dashboard({currentUser,onNavigate}){
 
       {/* KPI Cards */}
       <div style={{display:"flex",gap:16,marginBottom:24,flexWrap:"wrap"}}>
+        <FollowUpsSummary currentUser={currentUser}/>
         <StatCard label="Total Leads" value={stats.total} color="#2563eb"/>
         <StatCard label="Approved" value={stats.approved} color="#10b981"/>
         <StatCard label="Rejected" value={stats.rejected} color="#ef4444"/>
