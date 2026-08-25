@@ -15,13 +15,14 @@ const INST_TYPES = ["Engineering College","Medical College","K-12 School","Skill
 const BIZ_TYPES = ["Trust/Society","Private Limited","Partnership Firm","LLP","Proprietorship","Other"];
 const LEAD_SOURCES = ["Direct Sales","Client Website","Channel Partner","Inside Sales Team","North Sales Team","South Sales Team","East Sales Team","West Sales Team","Referral","Other"];
 const STATUS_META = {
-  LEAD_CREATED:       {label:"Lead Created",       color:"#64748b", bg:"#f1f5f9", step:1},
-  MGMT_VETTED:        {label:"Mgmt Vetted",        color:"#2563eb", bg:"#eff6ff", step:2},
-  PROPOSAL_IN_REVIEW: {label:"Proposal In Review", color:"#b45309", bg:"#fef3c7", step:3},
-  PROPOSAL_APPROVED:  {label:"Proposal Approved",  color:"#15803d", bg:"#f0fdf4", step:4},
-  MOU_IN_PROGRESS:    {label:"MOU In Progress",    color:"#7c3aed", bg:"#f5f3ff", step:5},
-  COMPLETED:          {label:"Completed",          color:"#15803d", bg:"#f0fdf4", step:6},
-  REJECTED:           {label:"Rejected",           color:"#b91c1c", bg:"#fee2e2", step:0},
+  LEAD_CREATED:     {label:"Lead Created",    color:"#64748b", bg:"#f1f5f9", step:1},
+  DOCS_REQUESTED:   {label:"Docs Requested",  color:"#0891b2", bg:"#ecfeff", step:2},
+  MGMT_VETTED:      {label:"Lead Qualified",  color:"#2563eb", bg:"#eff6ff", step:3},
+  PROPOSAL_SHARED:  {label:"Proposal Shared", color:"#b45309", bg:"#fef3c7", step:4},
+  MOU_IN_PROGRESS:  {label:"MOU In Progress", color:"#7c3aed", bg:"#f5f3ff", step:5},
+  COMPLETED:        {label:"Onboarded",       color:"#15803d", bg:"#f0fdf4", step:6},
+  REJECTED:         {label:"Rejected",        color:"#b91c1c", bg:"#fee2e2", step:0},
+  COLD:             {label:"Cold",            color:"#334155", bg:"#e2e8f0", step:0},
 };
 
 // ── Shared Styles ─────────────────────────────────────────────────────────────

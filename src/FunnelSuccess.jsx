@@ -56,7 +56,7 @@ export default function FunnelSuccess({currentUser}){
       const totalLeads=leadsData?.length||0;
 
       // Count leads with proposals
-      const leadsWithProposals=leadsData?.filter(l=>l.status==="PROPOSAL_IN_REVIEW"||l.status==="PROPOSAL_APPROVED"||l.status==="MOU_IN_PROGRESS"||l.status==="COMPLETED").length||0;
+      const leadsWithProposals=leadsData?.filter(l=>l.status==="PROPOSAL_SHARED"||l.status==="MOU_IN_PROGRESS"||l.status==="COMPLETED").length||0;
 
       // Count proposals (for now, assume proposals exist if lead status indicates it)
       const totalProposals=leadsWithProposals;

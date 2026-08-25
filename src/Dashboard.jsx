@@ -4,13 +4,14 @@ import FollowUpsSummary from "./FollowUpsSummary.jsx";
 
 
 const STATUS_META = {
-  LEAD_CREATED:       {label:"Lead Created",       color:"#64748b", bg:"#f1f5f9"},
-  MGMT_VETTED:        {label:"Mgmt Vetted",        color:"#2563eb", bg:"#eff6ff"},
-  PROPOSAL_IN_REVIEW: {label:"Proposal In Review", color:"#b45309", bg:"#fef3c7"},
-  PROPOSAL_APPROVED:  {label:"Proposal Approved",  color:"#15803d", bg:"#f0fdf4"},
-  MOU_IN_PROGRESS:    {label:"MOU In Progress",    color:"#7c3aed", bg:"#f5f3ff"},
-  COMPLETED:          {label:"Completed",          color:"#15803d", bg:"#f0fdf4"},
-  REJECTED:           {label:"Rejected",           color:"#b91c1c", bg:"#fee2e2"},
+  LEAD_CREATED:     {label:"Lead Created",    color:"#64748b", bg:"#f1f5f9"},
+  DOCS_REQUESTED:   {label:"Docs Requested",  color:"#0891b2", bg:"#ecfeff"},
+  MGMT_VETTED:      {label:"Lead Qualified",  color:"#2563eb", bg:"#eff6ff"},
+  PROPOSAL_SHARED:  {label:"Proposal Shared", color:"#b45309", bg:"#fef3c7"},
+  MOU_IN_PROGRESS:  {label:"MOU In Progress", color:"#7c3aed", bg:"#f5f3ff"},
+  COMPLETED:        {label:"Onboarded",       color:"#15803d", bg:"#f0fdf4"},
+  REJECTED:         {label:"Rejected",        color:"#b91c1c", bg:"#fee2e2"},
+  COLD:             {label:"Cold",            color:"#334155", bg:"#e2e8f0"},
 };
 
 function Badge({status}){
@@ -35,7 +36,7 @@ export default function Dashboard({currentUser,onNavigate}){
       
       // Count by status
       const total=allLeads?.length||0;
-      const approved=allLeads?.filter(l=>l.status==="PROPOSAL_APPROVED"||l.status==="MOU_IN_PROGRESS"||l.status==="COMPLETED").length||0;
+      const approved=allLeads?.filter(l=>l.status==="PROPOSAL_SHARED"||l.status==="MOU_IN_PROGRESS"||l.status==="COMPLETED").length||0;
       const rejected=allLeads?.filter(l=>l.status==="REJECTED").length||0;
       const completed=allLeads?.filter(l=>l.status==="COMPLETED").length||0;
 

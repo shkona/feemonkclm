@@ -5,13 +5,14 @@ import AddFollowUpModal from "./AddFollowUpModal.jsx";
 import TransferLeadOwnerModal from "./TransferLeadOwnerModal.jsx";
 
 const STATUS_META = {
-  LEAD_CREATED:       {label:"Lead Created",       color:"#64748b", bg:"#f1f5f9"},
-  MGMT_VETTED:        {label:"Mgmt Vetted",        color:"#2563eb", bg:"#eff6ff"},
-  PROPOSAL_IN_REVIEW: {label:"Proposal In Review", color:"#b45309", bg:"#fef3c7"},
-  PROPOSAL_APPROVED:  {label:"Proposal Approved",  color:"#15803d", bg:"#f0fdf4"},
-  MOU_IN_PROGRESS:    {label:"MOU In Progress",    color:"#7c3aed", bg:"#f5f3ff"},
-  COMPLETED:          {label:"Completed",          color:"#15803d", bg:"#f0fdf4"},
-  REJECTED:           {label:"Rejected",           color:"#b91c1c", bg:"#fee2e2"},
+  LEAD_CREATED:     {label:"Lead Created",    color:"#64748b", bg:"#f1f5f9"},
+  DOCS_REQUESTED:   {label:"Docs Requested",  color:"#0891b2", bg:"#ecfeff"},
+  MGMT_VETTED:      {label:"Lead Qualified",  color:"#2563eb", bg:"#eff6ff"},
+  PROPOSAL_SHARED:  {label:"Proposal Shared", color:"#b45309", bg:"#fef3c7"},
+  MOU_IN_PROGRESS:  {label:"MOU In Progress", color:"#7c3aed", bg:"#f5f3ff"},
+  COMPLETED:        {label:"Onboarded",       color:"#15803d", bg:"#f0fdf4"},
+  REJECTED:         {label:"Rejected",        color:"#b91c1c", bg:"#fee2e2"},
+  COLD:             {label:"Cold",            color:"#334155", bg:"#e2e8f0"},
 };
 
 function Badge({status}){
@@ -266,13 +267,11 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
                 style={{background:"#f59e0b",color:"#fff",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
               >👤 Transfer Owner</button>
 
-              {/* Change Status button for rejected leads */}
-              {lead.status==="REJECTED"&&(
-                <button 
-                  onClick={()=>setShowStatusModal(true)}
-                  style={{background:"#8b5cf6",color:"#fff",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
-                >🔄 Change Status</button>
-              )}
+              {/* Change Status button - lets management set any status, including Docs Requested / Cold */}
+              <button
+                onClick={()=>setShowStatusModal(true)}
+                style={{background:"#8b5cf6",color:"#fff",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
+              >🔄 Change Status</button>
             </>
           )}
 
@@ -332,11 +331,12 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
               >
                 <option value="">-- Select Status --</option>
                 <option value="LEAD_CREATED">Lead Created</option>
-                <option value="MGMT_VETTED">Mgmt Vetted</option>
-                <option value="PROPOSAL_IN_REVIEW">Proposal In Review</option>
-                <option value="PROPOSAL_APPROVED">Proposal Approved</option>
+                <option value="DOCS_REQUESTED">Docs Requested</option>
+                <option value="MGMT_VETTED">Lead Qualified</option>
+                <option value="PROPOSAL_SHARED">Proposal Shared</option>
                 <option value="MOU_IN_PROGRESS">MOU In Progress</option>
-                <option value="COMPLETED">Completed</option>
+                <option value="COMPLETED">Onboarded</option>
+                <option value="COLD">Cold</option>
               </select>
             </div>
 

@@ -97,26 +97,27 @@ export default function LeadsReport({currentUser}){
     }
   };
 
+  const STATUS_META={
+    "LEAD_CREATED":{label:"Lead Created",color:"#64748b"},
+    "DOCS_REQUESTED":{label:"Docs Requested",color:"#0891b2"},
+    "MGMT_VETTED":{label:"Lead Qualified",color:"#2563eb"},
+    "PROPOSAL_SHARED":{label:"Proposal Shared",color:"#b45309"},
+    "MOU_IN_PROGRESS":{label:"MOU In Progress",color:"#7c3aed"},
+    "COMPLETED":{label:"Onboarded",color:"#15803d"},
+    "REJECTED":{label:"Rejected",color:"#b91c1c"},
+    "COLD":{label:"Cold",color:"#334155"},
+  };
+
   const handleExport=()=>{
     // Format data for export
     const exportData=leads.map(lead=>({
       "Lead Name":lead.name,
       "Associate":lead.users?.name||"--",
       "Created Date":new Date(lead.created_at).toLocaleDateString("en-IN"),
-      "Status":lead.status||"UNKNOWN"
+      "Status":(STATUS_META[lead.status]||{}).label||lead.status||"UNKNOWN"
     }));
-    
-    exportToCSV(exportData,"Leads_Report");
-  };
 
-  const STATUS_COLORS={
-    "LEAD_CREATED":"#64748b",
-    "MGMT_VETTED":"#2563eb",
-    "PROPOSAL_IN_REVIEW":"#b45309",
-    "PROPOSAL_APPROVED":"#15803d",
-    "MOU_IN_PROGRESS":"#7c3aed",
-    "COMPLETED":"#15803d",
-    "REJECTED":"#b91c1c",
+    exportToCSV(exportData,"Leads_Report");
   };
 
   return(
@@ -195,8 +196,8 @@ export default function LeadsReport({currentUser}){
                     <td style={{padding:"12px 16px",fontSize:13,color:"#1e293b"}}>{lead.users?.name||"--"}</td>
                     <td style={{padding:"12px 16px",fontSize:13,color:"#1e293b"}}>{new Date(lead.created_at).toLocaleDateString("en-IN")}</td>
                     <td style={{padding:"12px 16px"}}>
-                      <span style={{display:"inline-block",padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:600,color:"#fff",background:STATUS_COLORS[lead.status]||"#64748b"}}>
-                        {lead.status||"UNKNOWN"}
+                      <span style={{display:"inline-block",padding:"4px 10px",borderRadius:6,fontSize:10,fontWeight:600,color:"#fff",background:(STATUS_META[lead.status]||{}).color||"#64748b"}}>
+                        {(STATUS_META[lead.status]||{}).label||lead.status||"UNKNOWN"}
                       </span>
                     </td>
                   </tr>
