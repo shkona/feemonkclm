@@ -8,8 +8,9 @@ import Pipeline from "./Pipeline.jsx";
 import LeadDetail from "./LeadDetail.jsx"; 
 import VisitLog from "./VisitLog.jsx";
 import VisitsCalendar from "./VisitsCalendar.jsx";
-import FunnelSuccess from "./FunnelSuccess.jsx"; 
+import FunnelSuccess from "./FunnelSuccess.jsx";
 import Reports from "./Reports.jsx";
+import InsideSales from "./InsideSales.jsx";
 
 const INST_TYPES = ["Engineering College","Medical College","K-12 School","Skill Dev Institute","University","Management Institute","Polytechnic","Other"];
 const BIZ_TYPES = ["Trust/Society","Private Limited","Partnership Firm","LLP","Proprietorship","Other"];
@@ -124,12 +125,13 @@ export default function App(){
   const navItems=[
   {id:"dashboard",icon:"📊",label:"Dashboard"},
   {id:"pipeline",icon:"📋",label:"Pipeline"},
+  {id:"insidesales",icon:"🧲",label:"Inside Sales"},
   {id:"visits",icon:"📍",label:"Visits"},
   {id:"funnel",icon:"📈",label:"Funnel Success"},
   {id:"reports",icon:"📊",label:"Reports"},
   ...(isMgmt?[{id:"approvals",icon:"✅",label:"Approvals"},{id:"users",icon:"👥",label:"Users"}]:[]),
 ];
-const pageTitle={dashboard:"Dashboard",pipeline:"Pipeline",approvals:"Pending Approvals",users:"User Management",visits:"Visits",funnel:"Funnel Success",reports:"Reports",new:"New Lead"};
+const pageTitle={dashboard:"Dashboard",pipeline:"Pipeline",insidesales:"Inside Sales",approvals:"Pending Approvals",users:"User Management",visits:"Visits",funnel:"Funnel Success",reports:"Reports",new:"New Lead"};
   const roleColors={Sales:{background:"#2563eb"},["Channel Partner"]:{background:"#d97706"},Management:{background:"#6d28d9"}};
 
   return(
@@ -179,6 +181,7 @@ const pageTitle={dashboard:"Dashboard",pipeline:"Pipeline",approvals:"Pending Ap
             </div>
           )}
           {view==="pipeline"&&selectedLeadId&&<LeadDetail leadId={selectedLeadId} currentUser={currentUser} onBack={()=>setSelectedLeadId(null)} onNavigate={(v,params)=>{if(v==="proposal"){setView("proposal");} else {setView(v);}}} onRefresh={()=>setRefreshTrigger(t=>t+1)}/>}
+          {view==="insidesales"&&<InsideSales currentUser={currentUser} onSelectLead={id=>{setSelectedLeadId(id);setView("pipeline");}}/>}
           {view==="new"&&<NewLead currentUser={currentUser} onSubmit={()=>setView("pipeline")} onCancel={()=>setView("dashboard")}/>}
           {view==="approvals"&&isMgmt&&(
             <div>

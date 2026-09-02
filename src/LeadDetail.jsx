@@ -301,7 +301,7 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
           type="lead" 
           recordId={lead.id} 
           currentUser={currentUser}
-          onClose={()=>setFollowUpModal(false)}
+          onClose={()=>setShowFollowUpModal(false)}
           onSuccess={()=>{loadLead();if(onRefresh)onRefresh();}}
         />
       )}
