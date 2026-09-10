@@ -1,16 +1,16 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { supabase } from "./supabase";
 import { Btn, Alert } from "./App";
 
-const TENURE_OPTIONS = [3,6,9,10,12,15,18,21,24,27,30,33,36];
-const PRODUCTS = ["SV GST","SV Non GST","STD ROI","HYBRID"];
-const ADVANCE_EMI_OPTIONS = [0,1,2,3];
 const INST_TYPES = ["Engineering College","Medical College","K-12 School","Skill Dev Institute","University","Management Institute","Polytechnic","Other"];
-const BIZ_TYPES = ["Trust/Society","Private Limited","Partnership Firm","LLP","Proprietorship","Other"];
-const LEAD_SOURCES = ["Direct Sales","Client Website","Channel Partner","Inside Sales Team","North Sales Team","South Sales Team","East Sales Team","West Sales Team","Referral","Other"];
+const BIZ_TYPES = ["Private Limited","Limited Liability","Partnership Firm","Proprietorship","Trust/Society","Other"];
+const BUSINESS_CATEGORIES = ["K-12","Higher Education","Upskilling","Executive Education"];
+const VINTAGE_OPTIONS = ["0-1 Year","1-3 Years",">3 years"];
+const TURNOVER_OPTIONS = ["0-50L","51L-1Cr","1Cr-2Cr","2-3Cr","3-4Cr","4-5Cr",">5Cr"];
+const LEAD_SOURCES = ["Direct Sales","Client Website","Inbound Website","Inbound Email","Channel Partner","Inside Sales Team","North Sales Team","South Sales Team","East Sales Team","West Sales Team","Referral","Employee Referral","Other"];
 
 export default function NewLead({currentUser,onSubmit,onCancel}){
-  const [formData,setFormData]=useState({name:"",legal_name:"",institute_type:"",business_type:"",estd_year:new Date().getFullYear(),turnover:"",source:"",sampleFees:"",roi:"",subvention:"",tenure:12,advanceEmi:0,product:"",processingFee:"",processingFeeType:"%"});
+  const [formData,setFormData]=useState({name:"",legal_name:"",institute_type:"",business_type:"",org_type:"",vintage:"",turnover:"",website:"",source:"",contact_phone:"",contact_email:""});
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState("");
   const [success,setSuccess]=useState(false);
@@ -40,17 +40,13 @@ export default function NewLead({currentUser,onSubmit,onCancel}){
         legal_name:formData.legal_name,
         institute_type:formData.institute_type,
         business_type:formData.business_type,
-        estd_year:parseInt(formData.estd_year),
+        org_type:formData.org_type,
+        vintage:formData.vintage,
         turnover:formData.turnover,
+        website:formData.website,
         source:formData.source,
-        sample_fees:parseFloat(formData.sampleFees)||null,
-        roi:parseFloat(formData.roi)||null,
-        subvention:parseFloat(formData.subvention)||null,
-        tenure:parseInt(formData.tenure),
-        advance_emi:parseInt(formData.advanceEmi),
-        product:formData.product,
-        processing_fee:parseFloat(formData.processingFee)||null,
-        processing_fee_type:formData.processingFeeType,
+        contact_phone:formData.contact_phone,
+        contact_email:formData.contact_email,
         status:"LEAD_CREATED",
         created_by:currentUser.id,
       }).select();
@@ -112,22 +108,53 @@ export default function NewLead({currentUser,onSubmit,onCancel}){
             </select>
           </div>
           <div>
+            <label style={labelStyle}>Institute Website</label>
+            <input type="text" name="website" value={formData.website} onChange={handleChange} placeholder="https://..." style={ic}/>
+          </div>
+        </div>
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}}>
+          <div>
             <label style={labelStyle}>Business Type</label>
             <select name="business_type" value={formData.business_type} onChange={handleChange} style={ic}>
               <option value="">Select type...</option>
               {BIZ_TYPES.map(t=><option key={t} value={t}>{t}</option>)}
             </select>
           </div>
+          <div>
+            <label style={labelStyle}>Business Category</label>
+            <select name="org_type" value={formData.org_type} onChange={handleChange} style={ic}>
+              <option value="">Select category...</option>
+              {BUSINESS_CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
         </div>
 
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}}>
           <div>
-            <label style={labelStyle}>Established Year</label>
-            <input type="number" name="estd_year" value={formData.estd_year} onChange={handleChange} style={ic}/>
+            <label style={labelStyle}>Vintage</label>
+            <select name="vintage" value={formData.vintage} onChange={handleChange} style={ic}>
+              <option value="">Select vintage...</option>
+              {VINTAGE_OPTIONS.map(v=><option key={v} value={v}>{v}</option>)}
+            </select>
           </div>
           <div>
             <label style={labelStyle}>Annual Turnover *</label>
-            <input type="text" name="turnover" value={formData.turnover} onChange={handleChange} placeholder="e.g., ₹5 Cr" style={ic}/>
+            <select name="turnover" value={formData.turnover} onChange={handleChange} style={ic}>
+              <option value="">Select turnover...</option>
+              {TURNOVER_OPTIONS.map(t=><option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:20}}>
+          <div>
+            <label style={labelStyle}>Mobile Number</label>
+            <input type="text" name="contact_phone" value={formData.contact_phone} onChange={handleChange} placeholder="+91 ..." style={ic}/>
+          </div>
+          <div>
+            <label style={labelStyle}>Email ID</label>
+            <input type="email" name="contact_email" value={formData.contact_email} onChange={handleChange} placeholder="name@institute.com" style={ic}/>
           </div>
         </div>
 
@@ -138,53 +165,6 @@ export default function NewLead({currentUser,onSubmit,onCancel}){
               <option value="">Select source...</option>
               {LEAD_SOURCES.map(s=><option key={s} value={s}>{s}</option>)}
             </select>
-          </div>
-          <div>
-            <label style={labelStyle}>Product</label>
-            <select name="product" value={formData.product} onChange={handleChange} style={ic}>
-              <option value="">Select product...</option>
-              {PRODUCTS.map(p=><option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-        </div>
-
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:20}}>
-          <div>
-            <label style={labelStyle}>Sample Fees</label>
-            <input type="number" name="sampleFees" value={formData.sampleFees} onChange={handleChange} placeholder="Amount in ₹" style={ic}/>
-          </div>
-          <div>
-            <label style={labelStyle}>ROI %</label>
-            <input type="number" name="roi" value={formData.roi} onChange={handleChange} placeholder="%" style={ic}/>
-          </div>
-          <div>
-            <label style={labelStyle}>Subvention %</label>
-            <input type="number" name="subvention" value={formData.subvention} onChange={handleChange} placeholder="%" style={ic}/>
-          </div>
-        </div>
-
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:20,marginBottom:20}}>
-          <div>
-            <label style={labelStyle}>Tenure (Months)</label>
-            <select name="tenure" value={formData.tenure} onChange={handleChange} style={ic}>
-              {TENURE_OPTIONS.map(t=><option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={labelStyle}>Advance EMI</label>
-            <select name="advanceEmi" value={formData.advanceEmi} onChange={handleChange} style={ic}>
-              {ADVANCE_EMI_OPTIONS.map(a=><option key={a} value={a}>{a}</option>)}
-            </select>
-          </div>
-          <div>
-            <label style={labelStyle}>Processing Fee</label>
-            <div style={{display:"flex",gap:8}}>
-              <input type="number" name="processingFee" value={formData.processingFee} onChange={handleChange} placeholder="Amount" style={{...ic,flex:1}}/>
-              <select name="processingFeeType" value={formData.processingFeeType} onChange={handleChange} style={{...ic,flex:0.3}}>
-                <option value="%">%</option>
-                <option value="₹">₹</option>
-              </select>
-            </div>
           </div>
         </div>
 

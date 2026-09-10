@@ -192,7 +192,6 @@ const pageTitle={dashboard:"Dashboard",pipeline:"Pipeline",insidesales:"Inside S
           {view==="users"&&isMgmt&&<UserManagement currentUser={currentUser}/>}
           {view==="visits"&&<VisitsCalendar currentUser={currentUser}/>}
 {view==="funnel"&&<FunnelSuccess currentUser={currentUser}/>}
-{view==="new"&&<NewLead currentUser={currentUser} onSubmit={()=>setView("pipeline")} onCancel={()=>setView("dashboard")}/>}
   {view==="reports"&&<Reports currentUser={currentUser}/>}
         </div>
       </div>
