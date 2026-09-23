@@ -100,7 +100,7 @@ export default function LeadsReport({currentUser}){
   const STATUS_META={
     "LEAD_CREATED":{label:"Lead Created",color:"#64748b"},
     "DOCS_REQUESTED":{label:"Docs Requested",color:"#0891b2"},
-    "MGMT_VETTED":{label:"Lead Qualified",color:"#2563eb"},
+    "MGMT_VETTED":{label:"Demo Booked",color:"#2563eb"},
     "PROPOSAL_SHARED":{label:"Proposal Shared",color:"#b45309"},
     "MOU_IN_PROGRESS":{label:"MOU In Progress",color:"#7c3aed"},
     "COMPLETED":{label:"Onboarded",color:"#15803d"},

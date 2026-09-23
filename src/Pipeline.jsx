@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 const STATUS_META = {
   LEAD_CREATED:     {label:"Lead Created",    color:"#64748b", bg:"#f1f5f9", step:1},
   DOCS_REQUESTED:   {label:"Docs Requested",  color:"#0891b2", bg:"#ecfeff", step:2},
-  MGMT_VETTED:      {label:"Lead Qualified",  color:"#2563eb", bg:"#eff6ff", step:3},
+  MGMT_VETTED:      {label:"Demo Booked",     color:"#2563eb", bg:"#eff6ff", step:3},
   PROPOSAL_SHARED:  {label:"Proposal Shared", color:"#b45309", bg:"#fef3c7", step:4},
   MOU_IN_PROGRESS:  {label:"MOU In Progress", color:"#7c3aed", bg:"#f5f3ff", step:5},
   COMPLETED:        {label:"Onboarded",       color:"#15803d", bg:"#f0fdf4", step:6},

@@ -206,7 +206,7 @@ export default function InsideSales({currentUser,onSelectLead}){
     <div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20}}>
         <div>
-          <h1 style={{fontSize:18,fontWeight:700,color:"#1e293b",margin:0}}>Inside Sales</h1>
+          <h1 style={{fontSize:18,fontWeight:700,color:"#1e293b",margin:0}}>Email Marketing</h1>
           <p style={{fontSize:13,color:"#64748b",margin:"4px 0 0"}}>Pre-leads sourced from LinkedIn, Apollo & email nurture sequences.</p>
         </div>
         <div style={{display:"flex",gap:10}}>

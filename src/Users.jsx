@@ -5,7 +5,7 @@ export default function UserManagement({currentUser}){
   const [users,setUsers]=useState([]);
   const [loading,setLoading]=useState(true);
   const [showNew,setShowNew]=useState(false);
-  const [newUser,setNewUser]=useState({name:"",email:"",role:"Sales",active:true});
+  const [newUser,setNewUser]=useState({name:"",email:"",password:"",role:"Sales",active:true});
   const [saving,setSaving]=useState(false);
   const [error,setError]=useState("");
   const [success,setSuccess]=useState("");
@@ -29,8 +29,12 @@ export default function UserManagement({currentUser}){
   };
 
   const handleAddUser=async()=>{
-    if(!newUser.name.trim()||!newUser.email.trim()){
-      setError("Name and email are required");
+    if(!newUser.name.trim()||!newUser.email.trim()||!newUser.password.trim()){
+      setError("Name, email and password are required");
+      return;
+    }
+    if(newUser.password.length<6){
+      setError("Password must be at least 6 characters");
       return;
     }
 
@@ -39,17 +43,33 @@ export default function UserManagement({currentUser}){
     setSuccess("");
 
     try{
+      // Creating an auth account switches the client's active session to the
+      // new user, so we save the admin's session first and restore it after.
+      const {data:{session:adminSession}}=await supabase.auth.getSession();
+
+      const {data:authData,error:authErr}=await supabase.auth.signUp({
+        email:newUser.email,
+        password:newUser.password,
+      });
+      if(authErr)throw authErr;
+
+      const uid=authData?.user?.id;
+      if(!uid)throw new Error("Could not create login for this user");
+
       const {error:err}=await supabase.from("users").insert({
+        id:uid,
         name:newUser.name,
         email:newUser.email,
         role:newUser.role,
         active:newUser.active,
       });
 
+      if(adminSession)await supabase.auth.setSession({access_token:adminSession.access_token,refresh_token:adminSession.refresh_token});
+
       if(err)throw err;
 
       setSuccess("User added successfully!");
-      setNewUser({name:"",email:"",role:"Sales",active:true});
+      setNewUser({name:"",email:"",password:"",role:"Sales",active:true});
       setShowNew(false);
       await loadUsers();
     }catch(err){
@@ -117,6 +137,10 @@ export default function UserManagement({currentUser}){
           </div>
 
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:16}}>
+            <div>
+              <label style={{display:"block",fontSize:12,fontWeight:600,color:"#475569",marginBottom:6}}>Password *</label>
+              <input type="password" value={newUser.password} onChange={e=>setNewUser({...newUser,password:e.target.value})} placeholder="At least 6 characters" style={{width:"100%",border:"1px solid #e2e8f0",borderRadius:6,padding:"8px 10px",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}/>
+            </div>
             <div>
               <label style={{display:"block",fontSize:12,fontWeight:600,color:"#475569",marginBottom:6}}>Role</label>
               <select value={newUser.role} onChange={e=>setNewUser({...newUser,role:e.target.value})} style={{width:"100%",border:"1px solid #e2e8f0",borderRadius:6,padding:"8px 10px",fontSize:13,outline:"none",fontFamily:"inherit",boxSizing:"border-box"}}>

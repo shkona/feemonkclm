@@ -18,7 +18,7 @@ const LEAD_SOURCES = ["Direct Sales","Client Website","Channel Partner","Inside 
 const STATUS_META = {
   LEAD_CREATED:     {label:"Lead Created",    color:"#64748b", bg:"#f1f5f9", step:1},
   DOCS_REQUESTED:   {label:"Docs Requested",  color:"#0891b2", bg:"#ecfeff", step:2},
-  MGMT_VETTED:      {label:"Lead Qualified",  color:"#2563eb", bg:"#eff6ff", step:3},
+  MGMT_VETTED:      {label:"Demo Booked",     color:"#2563eb", bg:"#eff6ff", step:3},
   PROPOSAL_SHARED:  {label:"Proposal Shared", color:"#b45309", bg:"#fef3c7", step:4},
   MOU_IN_PROGRESS:  {label:"MOU In Progress", color:"#7c3aed", bg:"#f5f3ff", step:5},
   COMPLETED:        {label:"Onboarded",       color:"#15803d", bg:"#f0fdf4", step:6},
@@ -125,13 +125,13 @@ export default function App(){
   const navItems=[
   {id:"dashboard",icon:"📊",label:"Dashboard"},
   {id:"pipeline",icon:"📋",label:"Pipeline"},
-  {id:"insidesales",icon:"🧲",label:"Inside Sales"},
+  {id:"insidesales",icon:"🧲",label:"Email Marketing"},
   {id:"visits",icon:"📍",label:"Visits"},
   {id:"funnel",icon:"📈",label:"Funnel Success"},
   {id:"reports",icon:"📊",label:"Reports"},
   ...(isMgmt?[{id:"approvals",icon:"✅",label:"Approvals"},{id:"users",icon:"👥",label:"Users"}]:[]),
 ];
-const pageTitle={dashboard:"Dashboard",pipeline:"Pipeline",insidesales:"Inside Sales",approvals:"Pending Approvals",users:"User Management",visits:"Visits",funnel:"Funnel Success",reports:"Reports",new:"New Lead"};
+const pageTitle={dashboard:"Dashboard",pipeline:"Pipeline",insidesales:"Email Marketing",approvals:"Pending Approvals",users:"User Management",visits:"Visits",funnel:"Funnel Success",reports:"Reports",new:"New Lead"};
   const roleColors={Sales:{background:"#2563eb"},["Channel Partner"]:{background:"#d97706"},Management:{background:"#6d28d9"}};
 
   return(
