@@ -74,6 +74,10 @@ create table if not exists email_marketing_new_contacts (
 );
 create index if not exists idx_emc_new_range on email_marketing_new_contacts(sequence_id, range_start, range_end);`;
 
+const SETUP_SQL_3=`-- Part 3 (company name in drill-down tables)
+alter table email_marketing_contact_stats add column if not exists company_name text;
+alter table email_marketing_new_contacts add column if not exists company_name text;`;
+
 function toISODate(d){ return d.toISOString().slice(0,10); }
 
 function startOfWeek(d){
@@ -89,6 +93,10 @@ const PRESETS={
   this_month:{label:"This Month",compute:()=>{const now=new Date();return {start:toISODate(new Date(now.getFullYear(),now.getMonth(),1)),end:toISODate(now)};}},
   custom:{label:"Custom",compute:null},
 };
+
+function companyContact(row){
+  return row.company_name?`${row.company_name} - ${row.contact_name}`:row.contact_name;
+}
 
 function pct(n,d){
   if(!d)return "0%";
@@ -247,7 +255,7 @@ export default function EmailMarketing(){
       if(metric.type==="apollo_new"){
         const {data,error:err}=await supabase
           .from("email_marketing_new_contacts")
-          .select("contact_name")
+          .select("contact_name,company_name")
           .eq("sequence_id",SEQUENCE_ID).eq("range_start",range.start).eq("range_end",range.end)
           .order("contact_name");
         if(err)throw err;
@@ -255,7 +263,7 @@ export default function EmailMarketing(){
       }else if(metric.type==="apollo_metric"){
         const {data,error:err}=await supabase
           .from("email_marketing_contact_stats")
-          .select("contact_name,sent,delivered,opened,replied,bounced")
+          .select("contact_name,company_name,sent,delivered,opened,replied,bounced")
           .eq("sequence_id",SEQUENCE_ID).eq("range_start",range.start).eq("range_end",range.end)
           .gt(metric.column,0)
           .order(metric.column,{ascending:false})
@@ -345,13 +353,14 @@ export default function EmailMarketing(){
                 Run both SQL blocks below in Supabase → SQL Editor (part 1 if you haven't already, part 2 for date-range + drill-down support), then hit Refresh.
               </p>
               <pre style={{background:"#1e293b",color:"#e2e8f0",padding:14,borderRadius:8,fontSize:11,overflowX:"auto",whiteSpace:"pre",marginBottom:10}}>{SETUP_SQL_1}</pre>
-              <pre style={{background:"#1e293b",color:"#e2e8f0",padding:14,borderRadius:8,fontSize:11,overflowX:"auto",whiteSpace:"pre"}}>{SETUP_SQL_2}</pre>
+              <pre style={{background:"#1e293b",color:"#e2e8f0",padding:14,borderRadius:8,fontSize:11,overflowX:"auto",whiteSpace:"pre",marginBottom:10}}>{SETUP_SQL_2}</pre>
+              <pre style={{background:"#1e293b",color:"#e2e8f0",padding:14,borderRadius:8,fontSize:11,overflowX:"auto",whiteSpace:"pre"}}>{SETUP_SQL_3}</pre>
             </div>
           )}
 
           {!apolloMissing&&apolloNotSynced&&(
             <div style={{background:"#f8fafc",border:"1px solid #e2e8f0",borderRadius:10,padding:20,marginBottom:20,color:"#64748b",fontSize:13}}>
-              No Apollo data synced yet for <strong>{rangeLabel}</strong>. Ask Claude to sync this exact date range, then hit Refresh.
+              No Apollo data synced yet for <strong>{rangeLabel}</strong>. Ask Claude to sync this range (just say the preset name or the dates shown above), then hit Refresh.
             </div>
           )}
 
@@ -413,14 +422,14 @@ export default function EmailMarketing(){
                   <div style={{textAlign:"center",padding:30,color:"#94a3b8"}}>No records for this range.</div>
                 ):activeMetric.type==="apollo_new"?(
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
-                    <thead><tr><th style={{textAlign:"left",padding:"9px 12px",fontSize:11,color:"#64748b",fontWeight:600,textTransform:"uppercase",background:"#fafafa",borderBottom:"1px solid #f1f5f9"}}>Contact Name</th></tr></thead>
-                    <tbody>{drilldownRows.map((r,i)=><tr key={i} style={{borderBottom:"1px solid #f8fafc"}}><td style={{padding:"9px 12px",color:"#1e293b"}}>{r.contact_name}</td></tr>)}</tbody>
+                    <thead><tr><th style={{textAlign:"left",padding:"9px 12px",fontSize:11,color:"#64748b",fontWeight:600,textTransform:"uppercase",background:"#fafafa",borderBottom:"1px solid #f1f5f9"}}>Company - Contact Name</th></tr></thead>
+                    <tbody>{drilldownRows.map((r,i)=><tr key={i} style={{borderBottom:"1px solid #f8fafc"}}><td style={{padding:"9px 12px",color:"#1e293b"}}>{companyContact(r)}</td></tr>)}</tbody>
                   </table>
                 ):activeMetric.type==="apollo_metric"?(
                   <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
                     <thead>
                       <tr>
-                        {["Contact Name","Sent","Delivered","Opened","Replied","Bounced"].map(h=>
+                        {["Company - Contact Name","Sent","Delivered","Opened","Replied","Bounced"].map(h=>
                           <th key={h} style={{textAlign:"left",padding:"9px 12px",fontSize:11,color:"#64748b",fontWeight:600,textTransform:"uppercase",background:"#fafafa",borderBottom:"1px solid #f1f5f9"}}>{h}</th>
                         )}
                       </tr>
@@ -428,7 +437,7 @@ export default function EmailMarketing(){
                     <tbody>
                       {drilldownRows.map((r,i)=>(
                         <tr key={i} style={{borderBottom:"1px solid #f8fafc"}}>
-                          <td style={{padding:"9px 12px",fontWeight:600,color:"#1e293b"}}>{r.contact_name}</td>
+                          <td style={{padding:"9px 12px",fontWeight:600,color:"#1e293b"}}>{companyContact(r)}</td>
                           <td style={{padding:"9px 12px",color:"#64748b"}}>{r.sent}</td>
                           <td style={{padding:"9px 12px",color:"#64748b"}}>{r.delivered}</td>
                           <td style={{padding:"9px 12px",color:"#64748b"}}>{r.opened}</td>
