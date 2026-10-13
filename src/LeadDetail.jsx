@@ -3,6 +3,7 @@ import { supabase } from "./supabase";
 import ActivityLog from "./ActivityLog.jsx";
 import AddFollowUpModal from "./AddFollowUpModal.jsx";
 import TransferLeadOwnerModal from "./TransferLeadOwnerModal.jsx";
+import { LENDERS, LENDER_STATUS, getLenderStatus, LenderStatusModal } from "./lenderStatus.jsx";
 
 const STATUS_META = {
   LEAD_CREATED:     {label:"Lead Created",    color:"#64748b", bg:"#f1f5f9"},
@@ -40,6 +41,20 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
   const [showTransferModal,setShowTransferModal]=useState(false);
   const [showStatusModal,setShowStatusModal]=useState(false);
   const [newStatus,setNewStatus]=useState("");
+  const [lenderModal,setLenderModal]=useState(null);
+
+  const setLenderStatus=async(lender,value)=>{
+    try{
+      const {error}=await supabase.from("leads").update({[lender.column]:value}).eq("id",leadId);
+      if(error)throw error;
+      setLead({...lead,[lender.column]:value});
+      setLenderModal(null);
+      if(onRefresh)onRefresh();
+    }catch(err){
+      console.error("Error updating lender status:",err);
+      alert("Failed to update "+lender.label+" status");
+    }
+  };
 
   useEffect(()=>{
     loadLead();
@@ -275,6 +290,18 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
             </>
           )}
 
+          {/* Lender status buttons - available to all */}
+          {LENDERS.map(ld=>{
+            const m=LENDER_STATUS[getLenderStatus(lead,ld)];
+            return(
+              <button key={ld.key}
+                onClick={()=>setLenderModal(ld)}
+                title={m.label}
+                style={{background:m.bg,color:m.color,border:"1px solid "+m.color,borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
+              >{m.icon} {ld.label} Status</button>
+            );
+          })}
+
           {/* Add Follow-up button - available to all */}
           {lead.status!=="REJECTED"&&lead.status!=="COMPLETED"&&(
             <button 
@@ -313,6 +340,16 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
           currentOwner={lead.created_by}
           onClose={()=>setShowTransferModal(false)}
           onSuccess={()=>{loadLead();if(onRefresh)onRefresh();}}
+        />
+      )}
+
+      {/* Lender Status Modal */}
+      {lenderModal&&(
+        <LenderStatusModal
+          lender={lenderModal}
+          current={getLenderStatus(lead,lenderModal)}
+          onSelect={v=>setLenderStatus(lenderModal,v)}
+          onClose={()=>setLenderModal(null)}
         />
       )}
 

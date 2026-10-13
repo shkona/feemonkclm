@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
+import { LENDERS, LENDER_STATUS, LENDER_FILTER_STATUSES, getLenderStatus, LenderIcon } from "./lenderStatus.jsx";
 
 const STATUS_META = {
   LEAD_CREATED:     {label:"Lead Created",    color:"#64748b", bg:"#f1f5f9", step:1},
@@ -24,6 +25,7 @@ export default function Pipeline({currentUser,onSelectLead,refreshKey}){
   const [filterUser,setFilterUser]=useState("");
   const [filterFromDate,setFilterFromDate]=useState("");
   const [filterToDate,setFilterToDate]=useState("");
+  const [filterLender,setFilterLender]=useState("");
   const [users,setUsers]=useState([]);
 
   useEffect(()=>{
@@ -75,7 +77,14 @@ export default function Pipeline({currentUser,onSelectLead,refreshKey}){
       }
     }
     
-    return statusMatch&&userMatch&&dateMatch;
+    let lenderMatch=true;
+    if(filterLender){
+      const [lk,ls]=filterLender.split(":");
+      const lender=LENDERS.find(x=>x.key===lk);
+      lenderMatch=getLenderStatus(l,lender)===ls;
+    }
+
+    return statusMatch&&userMatch&&dateMatch&&lenderMatch;
   });
 
   return(
@@ -123,8 +132,19 @@ export default function Pipeline({currentUser,onSelectLead,refreshKey}){
           )}
         </div>
 
-        {/* User Dropdown */}
+        {/* Lender Dropdown */}
         <div style={{marginLeft:"auto"}}>
+          <label style={{display:"block",fontSize:10,fontWeight:600,color:"#475569",marginBottom:4}}>Filter by Lender</label>
+          <select value={filterLender} onChange={e=>setFilterLender(e.target.value)} style={{padding:"6px 12px",borderRadius:6,border:"1px solid #e2e8f0",background:"#fff",color:"#64748b",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",minWidth:170}}>
+            <option value="">All Lenders</option>
+            {LENDERS.map(ld=>LENDER_FILTER_STATUSES.map(s=>
+              <option key={ld.key+s} value={ld.key+":"+s}>{ld.label} - {LENDER_STATUS[s].label}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* User Dropdown */}
+        <div>
           <label style={{display:"block",fontSize:10,fontWeight:600,color:"#475569",marginBottom:4}}>Filter by User</label>
           <select value={filterUser} onChange={e=>setFilterUser(e.target.value)} style={{padding:"6px 12px",borderRadius:6,border:"1px solid #e2e8f0",background:"#fff",color:"#64748b",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",minWidth:150}}>
             <option value="">All Users</option>
@@ -141,14 +161,14 @@ export default function Pipeline({currentUser,onSelectLead,refreshKey}){
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
             <thead>
               <tr>
-                {["Institute","Created By","Source","Turnover","Status","Progress","Date"].map(h=>
+                {["Institute","Created By","Source","Turnover","Status","Progress","Fibe","Avanse","Date"].map(h=>
                   <th key={h} style={{textAlign:"left",padding:"9px 12px",fontSize:11,color:"#64748b",fontWeight:600,textTransform:"uppercase",letterSpacing:".4px",borderBottom:"1px solid #f1f5f9",background:"#fafafa",whiteSpace:"nowrap"}}>{h}</th>
                 )}
               </tr>
             </thead>
             <tbody>
               {filtered.length===0?
-                <tr><td colSpan={7} style={{textAlign:"center",padding:40,color:"#94a3b8",fontSize:13}}>No leads found.</td></tr>
+                <tr><td colSpan={9} style={{textAlign:"center",padding:40,color:"#94a3b8",fontSize:13}}>No leads found.</td></tr>
               :
                 filtered.map(l=>(
                   <tr key={l.id} onClick={()=>onSelectLead(l.id)} style={{borderBottom:"1px solid #f8fafc",cursor:"pointer",transition:"background .1s"}} onMouseEnter={e=>e.currentTarget.style.background="#f8fafc"} onMouseLeave={e=>e.currentTarget.style.background=""}>
@@ -165,6 +185,9 @@ export default function Pipeline({currentUser,onSelectLead,refreshKey}){
                     <td style={{padding:"9px 12px",borderBottom:"1px solid #f9fafb",verticalAlign:"middle",fontSize:13}}>
                       <div style={{fontSize:10,color:"#64748b"}}>{l.status}</div>
                     </td>
+                    {LENDERS.map(ld=>(
+                      <td key={ld.key} style={{padding:"9px 12px",borderBottom:"1px solid #f9fafb",verticalAlign:"middle",textAlign:"center"}}><LenderIcon status={getLenderStatus(l,ld)}/></td>
+                    ))}
                     <td style={{padding:"9px 12px",borderBottom:"1px solid #f9fafb",verticalAlign:"middle",fontSize:13,color:"#94a3b8"}}>{new Date(l.created_at).toLocaleDateString("en-IN")}</td>
                   </tr>
                 ))
