@@ -1,29 +1,33 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
 
-export default function FollowUpsSummary({currentUser}){
+export default function FollowUpsSummary({currentUser,userId}){
   const [followups,setFollowups]=useState({leads:0,visits:0});
   const [loading,setLoading]=useState(true);
 
   useEffect(()=>{
     loadFollowups();
-  },[]);
+  },[userId]);
 
   const loadFollowups=async()=>{
     try{
       const today=new Date().toISOString().split("T")[0];
 
       // Get today's lead follow-ups
-      const {data:leadFollowups}=await supabase
+      let leadQ=supabase
         .from("lead_followups")
         .select("id")
         .eq("followup_date",today);
+      if(userId)leadQ=leadQ.eq("user_id",userId);
+      const {data:leadFollowups}=await leadQ;
 
       // Get today's visit follow-ups
-      const {data:visitFollowups}=await supabase
+      let visitQ=supabase
         .from("visit_followups")
         .select("id")
         .eq("followup_date",today);
+      if(userId)visitQ=visitQ.eq("user_id",userId);
+      const {data:visitFollowups}=await visitQ;
 
       setFollowups({
         leads:leadFollowups?.length||0,
