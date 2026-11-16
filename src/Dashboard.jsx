@@ -52,6 +52,8 @@ export default function Dashboard({currentUser,onNavigate}){
   const [loading,setLoading]=useState(true);
   const [period,setPeriod]=useState("ytd");
   const [filterUser,setFilterUser]=useState("");
+  const isMgmt=currentUser.role==="Management";
+  const activeUser=isMgmt?filterUser:currentUser.id;
   const [users,setUsers]=useState([]);
   const [page,setPage]=useState(1);
   const [totalCount,setTotalCount]=useState(0);
@@ -64,7 +66,7 @@ export default function Dashboard({currentUser,onNavigate}){
     const {start,end}=getPeriodRange(period);
     q=q.gte("created_at",start.toISOString());
     if(end)q=q.lt("created_at",end.toISOString());
-    if(filterUser)q=q.eq("created_by",filterUser);
+    if(activeUser)q=q.eq("created_by",activeUser);
     return q;
   };
 
@@ -87,7 +89,7 @@ export default function Dashboard({currentUser,onNavigate}){
       }
     })();
     return()=>{cancelled=true;};
-  },[period,filterUser]);
+  },[period,activeUser]);
 
   useEffect(()=>{
     let cancelled=false;
@@ -108,7 +110,7 @@ export default function Dashboard({currentUser,onNavigate}){
       }
     })();
     return()=>{cancelled=true;};
-  },[period,filterUser,page]);
+  },[period,activeUser,page]);
 
   const totalPages=Math.max(1,Math.ceil(totalCount/PAGE_SIZE));
 
@@ -126,15 +128,15 @@ export default function Dashboard({currentUser,onNavigate}){
       <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:16,flexWrap:"wrap",marginBottom:20}}>
         <div>
           <h1 style={{fontSize:24,fontWeight:700,color:"#1e293b",margin:0}}>Welcome back, {currentUser.name}!</h1>
-          <p style={{fontSize:13,color:"#64748b",margin:"4px 0 0"}}>Here's what's happening with {filterUser?`${users.find(u=>u.id===filterUser)?.name||"this user"}'s`:"your team's"} leads.</p>
+          <p style={{fontSize:13,color:"#64748b",margin:"4px 0 0"}}>Here's what's happening with {!isMgmt?"your":filterUser?`${users.find(u=>u.id===filterUser)?.name||"this user"}'s`:"your team's"} leads.</p>
         </div>
-        <div>
+        {isMgmt&&<div>
           <label style={{display:"block",fontSize:10,fontWeight:600,color:"#475569",marginBottom:4}}>Filter by User</label>
           <select value={filterUser} onChange={e=>changeUser(e.target.value)} style={{padding:"6px 12px",borderRadius:6,border:"1px solid #e2e8f0",background:"#fff",color:"#64748b",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",minWidth:160}}>
             <option value="">All Users</option>
             {users.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}
           </select>
-        </div>
+        </div>}
       </div>
 
       {/* Period Tabs */}
@@ -150,7 +152,7 @@ export default function Dashboard({currentUser,onNavigate}){
 
       {/* KPI Cards */}
       <div style={{display:"flex",gap:16,marginBottom:24,flexWrap:"wrap"}}>
-        <FollowUpsSummary currentUser={currentUser} userId={filterUser}/>
+        <FollowUpsSummary currentUser={currentUser} userId={activeUser}/>
         <StatCard label="Total Leads" value={stats.total} color="#2563eb"/>
         <StatCard label="Approved" value={stats.approved} color="#10b981"/>
         <StatCard label="Rejected" value={stats.rejected} color="#ef4444"/>
