@@ -1,6 +1,7 @@
 import { useState } from "react";
 import LeadsReport from "./LeadsReport.jsx";
 import ProspectsReport from "./ProspectsReport.jsx";
+import StageMovementReport from "./StageMovementReport.jsx";
 
 export default function Reports({currentUser}){
   const [activeTab,setActiveTab]=useState("leads");
@@ -24,11 +25,16 @@ export default function Reports({currentUser}){
           onClick={()=>setActiveTab("prospects")}
           style={{padding:"12px 20px",border:"none",background:"none",cursor:"pointer",borderBottom:activeTab==="prospects"?"2px solid #2563eb":"none",color:activeTab==="prospects"?"#2563eb":"#64748b",fontWeight:600,fontSize:13,fontFamily:"inherit"}}
         >Prospects</button>
+        <button
+          onClick={()=>setActiveTab("movement")}
+          style={{padding:"12px 20px",border:"none",background:"none",cursor:"pointer",borderBottom:activeTab==="movement"?"2px solid #2563eb":"none",color:activeTab==="movement"?"#2563eb":"#64748b",fontWeight:600,fontSize:13,fontFamily:"inherit"}}
+        >Stage Movement</button>
       </div>
 
       {/* Tab Content */}
       {activeTab==="leads"&&<LeadsReport currentUser={currentUser}/>}
       {activeTab==="prospects"&&<ProspectsReport currentUser={currentUser}/>}
+      {activeTab==="movement"&&<StageMovementReport currentUser={currentUser}/>}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./supabase";
 import ActivityLog from "./ActivityLog.jsx";
+import StageHistory from "./StageHistory.jsx";
 import AddFollowUpModal from "./AddFollowUpModal.jsx";
 import TransferLeadOwnerModal from "./TransferLeadOwnerModal.jsx";
 import { LENDERS, LENDER_STATUS, getLenderStatus, LenderStatusModal } from "./lenderStatus.jsx";
@@ -145,6 +146,7 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
   if(!lead)return <div style={{padding:20,color:"#ef4444"}}>Lead not found</div>;
 
   const isManagement=currentUser.role==="Management";
+  const canChangeStatus=isManagement||lead.created_by===currentUser.id;
 
   return(
     <div>
@@ -281,13 +283,15 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
                 onClick={()=>setShowTransferModal(true)}
                 style={{background:"#f59e0b",color:"#fff",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
               >👤 Transfer Owner</button>
-
-              {/* Change Status button - lets management set any status, including Docs Requested / Cold */}
-              <button
-                onClick={()=>setShowStatusModal(true)}
-                style={{background:"#8b5cf6",color:"#fff",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
-              >🔄 Change Status</button>
             </>
+          )}
+
+          {/* Change Status button - Management, or the user who owns this lead */}
+          {canChangeStatus&&(
+            <button
+              onClick={()=>setShowStatusModal(true)}
+              style={{background:"#8b5cf6",color:"#fff",border:"none",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}
+            >🔄 Change Status</button>
           )}
 
           {/* Lender status buttons - available to all */}
@@ -315,6 +319,11 @@ export default function LeadDetail({leadId,currentUser,onBack,onNavigate,onRefre
             style={{background:"#fff",color:"#475569",border:"1px solid #e2e8f0",borderRadius:6,padding:"10px 20px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit",marginLeft:"auto"}}
           >Close</button>
         </div>
+      </div>
+
+      {/* Stage History */}
+      <div style={{marginTop:24}}>
+        <StageHistory leadId={lead.id} refreshKey={lead.status}/>
       </div>
 
       {/* Activity Log */}
