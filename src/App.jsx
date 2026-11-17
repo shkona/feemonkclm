@@ -50,12 +50,87 @@ function Btn({children,onClick,variant="primary",disabled,style={}}){
   return <button onClick={disabled?undefined:onClick} style={{...base,...v[variant]}}>{children}</button>;
 }
 
-// ── Login Screen ───────────────────────────────────────────────────────────────
-function LoginScreen({onLogin}){
-  const emailRef=useRef(),passRef=useRef();
+// A password-reset email link returns here with #...&type=recovery (or #error=... when the link is expired/used).
+// Read it at module load, before supabase-js strips the hash.
+const HASH_PARAMS=new URLSearchParams(typeof window!=="undefined"?window.location.hash.replace(/^#/,""):"");
+const STARTED_IN_RECOVERY=HASH_PARAMS.get("type")==="recovery";
+const RESET_LINK_ERROR=HASH_PARAMS.get("error_code")?"This password reset link is invalid or has expired. Please request a new one.":"";
+
+const authCardStyle={background:"#fff",borderRadius:12,padding:40,width:"100%",maxWidth:380,boxShadow:"0 20px 25px -5px rgba(0,0,0,0.1)"};
+const authPageStyle={minHeight:"100vh",background:"linear-gradient(135deg,#667eea 0%,#764ba2 100%)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"};
+const authInputStyle={width:"100%",padding:"10px 12px",borderRadius:6,border:"1px solid #e2e8f0",fontSize:13,fontFamily:"inherit",boxSizing:"border-box"};
+const authLinkStyle={background:"none",border:"none",padding:0,color:"#2563eb",fontSize:12,cursor:"pointer",fontFamily:"inherit"};
+
+// ── Set New Password Screen (shown after clicking the reset link in the email) ──
+function SetNewPasswordScreen({onDone}){
+  const passRef=useRef(),confirmRef=useRef();
   const [loading,setLoading]=useState(false);
   const [error,setError]=useState("");
-  
+
+  const handleSubmit=async()=>{
+    const password=passRef.current.value, confirm=confirmRef.current.value;
+    if(password.length<8){setError("Password must be at least 8 characters");return;}
+    if(password!==confirm){setError("Passwords do not match");return;}
+    setLoading(true);
+    setError("");
+    try{
+      const {error:err}=await supabase.auth.updateUser({password});
+      if(err)throw err;
+      await supabase.auth.signOut();
+      onDone();
+    }catch(err){
+      setError(/session/i.test(err.message||"")?"This reset link has expired or was already used. Please request a new one.":(err.message||"Could not update password"));
+    }finally{
+      setLoading(false);
+    }
+  };
+
+  return(
+    <div style={authPageStyle}>
+      <div style={authCardStyle}>
+        <h1 style={{fontSize:24,fontWeight:700,color:"#1e293b",margin:"0 0 8px",textAlign:"center"}}>Set a new password</h1>
+        <p style={{fontSize:13,color:"#64748b",textAlign:"center",margin:"0 0 32px"}}>Choose a password you'll use to sign in to FeeMonk CLM.</p>
+        {error&&<Alert type="error" message={error} onClose={()=>setError("")}/>}
+        <input ref={passRef} type="password" placeholder="New password (min 8 characters)" autoComplete="new-password" style={{...authInputStyle,marginBottom:12}}/>
+        <input ref={confirmRef} type="password" placeholder="Confirm new password" autoComplete="new-password" onKeyPress={e=>e.key==="Enter"&&handleSubmit()} style={{...authInputStyle,marginBottom:20}}/>
+        <Btn onClick={handleSubmit} disabled={loading} style={{width:"100%"}}>{loading?"Saving...":"Update Password"}</Btn>
+      </div>
+    </div>
+  );
+}
+
+// ── Login Screen ───────────────────────────────────────────────────────────────
+function LoginScreen({onLogin,notice,initialError}){
+  const emailRef=useRef(),passRef=useRef(),resetEmailRef=useRef();
+  const [mode,setMode]=useState(initialError?"forgot":"login");
+  const [prefillEmail,setPrefillEmail]=useState("");
+  const [sentTo,setSentTo]=useState("");
+  const [loading,setLoading]=useState(false);
+  const [error,setError]=useState(initialError||"");
+
+  const showForgot=()=>{
+    setPrefillEmail(emailRef.current?.value||"");
+    setError("");
+    setSentTo("");
+    setMode("forgot");
+  };
+
+  const handleReset=async()=>{
+    const email=resetEmailRef.current.value.trim();
+    if(!email){setError("Please enter your email");return;}
+    setLoading(true);
+    setError("");
+    try{
+      const {error:err}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});
+      if(err)throw err;
+      setSentTo(email);
+    }catch(err){
+      setError(/rate limit/i.test(err.message||"")?"Too many reset requests right now. Please wait a few minutes and try again.":(err.message||"Could not send reset link"));
+    }finally{
+      setLoading(false);
+    }
+  };
+
   const handleLogin=async()=>{
     const email=emailRef.current.value, password=passRef.current.value;
     if(!email||!password){setError("Please enter email and password");return;}
@@ -74,14 +149,41 @@ function LoginScreen({onLogin}){
     }
   };
 
+  if(mode==="forgot"){
+    return(
+      <div style={authPageStyle}>
+        <div style={authCardStyle}>
+          <h1 style={{fontSize:24,fontWeight:700,color:"#1e293b",margin:"0 0 8px",textAlign:"center"}}>Reset password</h1>
+          <p style={{fontSize:13,color:"#64748b",textAlign:"center",margin:"0 0 32px"}}>Enter your email and we'll send you a link to set a new password.</p>
+          {error&&<Alert type="error" message={error} onClose={()=>setError("")}/>}
+          {sentTo?(
+            <Alert type="success" message={`If an account exists for ${sentTo}, a reset link is on its way. Check your inbox (and spam folder). The link expires after a short time.`}/>
+          ):(
+            <>
+              <input ref={resetEmailRef} type="email" placeholder="Email" defaultValue={prefillEmail} onKeyPress={e=>e.key==="Enter"&&handleReset()} style={{...authInputStyle,marginBottom:20}}/>
+              <Btn onClick={handleReset} disabled={loading} style={{width:"100%"}}>{loading?"Sending...":"Send Reset Link"}</Btn>
+            </>
+          )}
+          <div style={{textAlign:"center",marginTop:20}}>
+            <button onClick={()=>{setError("");setMode("login");}} style={authLinkStyle}>← Back to sign in</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return(
-    <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#667eea 0%,#764ba2 100%)",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"}}>
-      <div style={{background:"#fff",borderRadius:12,padding:40,width:"100%",maxWidth:380,boxShadow:"0 20px 25px -5px rgba(0,0,0,0.1)"}}>
+    <div style={authPageStyle}>
+      <div style={authCardStyle}>
         <h1 style={{fontSize:24,fontWeight:700,color:"#1e293b",margin:"0 0 8px",textAlign:"center"}}>FeeMonk CLM</h1>
         <p style={{fontSize:13,color:"#64748b",textAlign:"center",margin:"0 0 32px"}}>Sales & Contract Management</p>
+        {notice&&!error&&<Alert type="success" message={notice}/>}
         {error&&<Alert type="error" message={error} onClose={()=>setError("")}/>}
-        <input ref={emailRef} type="email" placeholder="Email" style={{width:"100%",padding:"10px 12px",borderRadius:6,border:"1px solid #e2e8f0",marginBottom:12,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
-        <input ref={passRef} type="password" placeholder="Password" onKeyPress={e=>e.key==="Enter"&&handleLogin()} style={{width:"100%",padding:"10px 12px",borderRadius:6,border:"1px solid #e2e8f0",marginBottom:20,fontSize:13,fontFamily:"inherit",boxSizing:"border-box"}}/>
+        <input ref={emailRef} type="email" placeholder="Email" style={{...authInputStyle,marginBottom:12}}/>
+        <input ref={passRef} type="password" placeholder="Password" onKeyPress={e=>e.key==="Enter"&&handleLogin()} style={{...authInputStyle,marginBottom:8}}/>
+        <div style={{textAlign:"right",marginBottom:20}}>
+          <button onClick={showForgot} style={authLinkStyle}>Forgot password?</button>
+        </div>
         <Btn onClick={handleLogin} disabled={loading} style={{width:"100%"}}>{loading?"Signing in...":"Sign In"}</Btn>
       </div>
     </div>
@@ -97,8 +199,12 @@ export default function App(){
   const [view,setView]=useState("dashboard");
   const [selectedLeadId,setSelectedLeadId]=useState(null);
   const [refreshTrigger,setRefreshTrigger]=useState(0);
+  const [recovery,setRecovery]=useState(STARTED_IN_RECOVERY);
+  const [loginNotice,setLoginNotice]=useState("");
+  const [linkError,setLinkError]=useState(RESET_LINK_ERROR);
 
   useEffect(()=>{
+    if(RESET_LINK_ERROR)window.history.replaceState(null,"",window.location.pathname);
     supabase.auth.getSession().then(async({data:{session}})=>{
       if(session){
         const {data}=await supabase.from("users").select("*").eq("id",session.user.id).single();
@@ -108,9 +214,17 @@ export default function App(){
     });
     const {data:{subscription}}=supabase.auth.onAuthStateChange(async(event,session)=>{
       if(event==="SIGNED_OUT")setCurrentUser(null);
+      if(event==="PASSWORD_RECOVERY")setRecovery(true);
     });
     return()=>subscription.unsubscribe();
   },[]);
+
+  const handlePasswordUpdated=()=>{
+    window.history.replaceState(null,"",window.location.pathname);
+    setCurrentUser(null);
+    setRecovery(false);
+    setLoginNotice("Password updated. Please sign in with your new password.");
+  };
 
   const handleLogout=async()=>{
     await supabase.auth.signOut();
@@ -119,7 +233,8 @@ export default function App(){
   };
 
   if(authLoading)return <div style={{minHeight:"100vh",background:"#f1f5f9",display:"flex",alignItems:"center",justifyContent:"center"}}><Spinner/></div>;
-  if(!currentUser)return <LoginScreen onLogin={setCurrentUser}/>;
+  if(recovery)return <SetNewPasswordScreen onDone={handlePasswordUpdated}/>;
+  if(!currentUser)return <LoginScreen onLogin={u=>{setLinkError("");setLoginNotice("");setCurrentUser(u);}} notice={loginNotice} initialError={linkError}/>;
 
   const isMgmt=currentUser.role==="Management";
   const navItems=[
